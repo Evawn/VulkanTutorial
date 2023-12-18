@@ -13,6 +13,15 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="VWrap">
+      <UniqueIdentifier>{8f2393cf-bc8e-4002-a698-6cd0e43ca5db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="VWrap\Header Files">
+      <UniqueIdentifier>{3fdfd82b-b09f-4d96-a9e9-9bc32bb21415}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="VWrap\Source Files">
+      <UniqueIdentifier>{9360ecad-f866-4f6f-b6af-b571279139ec}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -20,6 +29,66 @@
     </ClCompile>
     <ClCompile Include="Application.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VWrap\CommandPool.cpp">
+      <Filter>VWrap\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VWrap\DescriptorSetLayout.cpp">
+      <Filter>VWrap\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VWrap\Device.cpp">
+      <Filter>VWrap\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VWrap\Framebuffer.cpp">
+      <Filter>VWrap\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VWrap\Image.cpp">
+      <Filter>VWrap\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VWrap\ImageView.cpp">
+      <Filter>VWrap\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VWrap\Instance.cpp">
+      <Filter>VWrap\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VWrap\PhysicalDevice.cpp">
+      <Filter>VWrap\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VWrap\Pipeline.cpp">
+      <Filter>VWrap\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VWrap\RenderPass.cpp">
+      <Filter>VWrap\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VWrap\Swapchain.cpp">
+      <Filter>VWrap\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VWrap\Utils.cpp">
+      <Filter>VWrap\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VWrap\CommandBuffer.cpp">
+      <Filter>VWrap\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VWrap\Semaphore.cpp">
+      <Filter>VWrap\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VWrap\Fence.cpp">
+      <Filter>VWrap\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VWrap\Sampler.cpp">
+      <Filter>VWrap\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VWrap\Buffer.cpp">
+      <Filter>VWrap\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VWrap\DescriptorPool.cpp">
+      <Filter>VWrap\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VWrap\DescriptorSet.cpp">
+      <Filter>VWrap\Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VWrap\Queue.cpp">
+      <Filter>VWrap\Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -32,6 +101,69 @@
   <ItemGroup>
     <ClInclude Include="Application.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VWrap\CommandPool.h">
+      <Filter>VWrap\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VWrap\DescriptorSetLayout.h">
+      <Filter>VWrap\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VWrap\Device.h">
+      <Filter>VWrap\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VWrap\Framebuffer.h">
+      <Filter>VWrap\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VWrap\Image.h">
+      <Filter>VWrap\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VWrap\ImageView.h">
+      <Filter>VWrap\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VWrap\Instance.h">
+      <Filter>VWrap\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VWrap\PhysicalDevice.h">
+      <Filter>VWrap\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VWrap\Pipeline.h">
+      <Filter>VWrap\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VWrap\RenderPass.h">
+      <Filter>VWrap\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VWrap\Surface.h">
+      <Filter>VWrap\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VWrap\Swapchain.h">
+      <Filter>VWrap\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VWrap\Utils.h">
+      <Filter>VWrap\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VWrap\CommandBuffer.h">
+      <Filter>VWrap\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VWrap\Semaphore.h">
+      <Filter>VWrap\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VWrap\Fence.h">
+      <Filter>VWrap\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VWrap\Sampler.h">
+      <Filter>VWrap\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VWrap\Buffer.h">
+      <Filter>VWrap\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VWrap\DescriptorPool.h">
+      <Filter>VWrap\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VWrap\DescriptorSet.h">
+      <Filter>VWrap\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VWrap\Queue.h">
+      <Filter>VWrap\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
