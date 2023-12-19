@@ -1,14 +1,18 @@
 #include "Application.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#define TINYOBJLOADER_IMPLEMENTATION
+#include "tiny_obj_loader.h"
 
 /// <summary>
 /// Entry point of our application. Creates the app, and runs it while catching any exceptions.
 /// </summary>
 /// <returns> EXIT_FAILURE if an exception is thrown, otherwise EXIT_SUCCESS. </returns>
 int main() {
-    HelloTriangleApplication app;
+    Application app;
 
     try {
-        app.run();
+        app.Run();
     }
     catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;

@@ -6,18 +6,37 @@
 
 namespace VWrap {
 
+	/// <summary>
+	/// Represents a descriptor set layout.
+	/// </summary>
 	class DescriptorSetLayout {
 	private:
-			VkDescriptorSetLayout m_layout;
-			std::shared_ptr<Device> m_device_ptr;
+
+		/// <summary>
+		/// The underlying vulkan descriptor set layout.
+		/// </summary>
+		VkDescriptorSetLayout m_layout;
+
+		/// <summary>
+		/// The device that created this descriptor set layout.
+		/// </summary>
+		std::shared_ptr<Device> m_device;
 
 	public:
 
+		/// <summary>
+		/// Creates a descriptor set layout with the given device.
+		/// </summary>
 		static std::shared_ptr<DescriptorSetLayout> Create(std::shared_ptr<Device> device);
 
+		/// <summary>
+		/// Gets the underlying vulkan descriptor set layout.
+		///	</summary>
 		VkDescriptorSetLayout GetHandle() const { return m_layout; }
 
+		/// <summary>
+		///	Destroys the underlying vulkan descriptor set layout.
+		/// </summary>
 		~DescriptorSetLayout();
-
 	};
 }

@@ -3,7 +3,6 @@
 #include "Device.h"
 #include <memory>
 #include <string>
-
 #include "stb_image.h"
 #include "CommandBuffer.h"
 #include "Buffer.h"

@@ -2,16 +2,15 @@
 
 namespace VWrap {
 
-
 	std::shared_ptr<Fence> Fence::Create(std::shared_ptr<Device> device) {
 		auto ret = std::make_shared<Fence>();
-		ret->m_device_ptr = device;
+		ret->m_device = device;
 
 		VkFenceCreateInfo info{};
 		info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 		info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-		if (vkCreateFence(device->getHandle(), &info, nullptr, &ret->m_fence) != VK_SUCCESS) {
+		if (vkCreateFence(device->GetHandle(), &info, nullptr, &ret->m_fence) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to create Fence!");
 		}
 
@@ -20,6 +19,6 @@ namespace VWrap {
 
 	Fence::~Fence() {
 		if (m_fence != VK_NULL_HANDLE)
-			vkDestroyFence(m_device_ptr->getHandle(), m_fence, nullptr);
+			vkDestroyFence(m_device->GetHandle(), m_fence, nullptr);
 	}
 }

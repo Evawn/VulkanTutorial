@@ -7,7 +7,7 @@ namespace VWrap {
 		ret->m_device_ptr = device;
 
         // Query the support, and choose optimal parameters
-        SwapchainSupportDetails details = device->getPhysicalDevicePtr()->QuerySwapchainSupport();
+        SwapchainSupportDetails details = device->GetPhysicalDevice()->QuerySwapchainSupport();
 
         VkExtent2D extent = chooseSwapExtent(details.capabilities, *surface->getWindowPtr());
         VkPresentModeKHR mode = chooseSwapPresentMode(details.presentModes);
@@ -32,7 +32,7 @@ namespace VWrap {
         createInfo.surface = surface->getHandle();
 
         // Get the queue families, and determine whether concurrent image sharing is necessary
-        QueueFamilyIndices indices = device->getPhysicalDevicePtr()->FindQueueFamilies();
+        QueueFamilyIndices indices = device->GetPhysicalDevice()->FindQueueFamilies();
         uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
         // Queue families are different
         if (indices.graphicsFamily != indices.presentFamily) {
@@ -52,14 +52,14 @@ namespace VWrap {
         createInfo.oldSwapchain = VK_NULL_HANDLE;
 
         // Create the swapchain
-        if (vkCreateSwapchainKHR(device->getHandle(), &createInfo, nullptr, &ret->m_swapchain) != VK_SUCCESS) {
+        if (vkCreateSwapchainKHR(device->GetHandle(), &createInfo, nullptr, &ret->m_swapchain) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create swapchain!");
         }
 
         // Retrieve handles to the swapchain images
-        vkGetSwapchainImagesKHR(device->getHandle(), ret->m_swapchain, &imageCount, nullptr);
+        vkGetSwapchainImagesKHR(device->GetHandle(), ret->m_swapchain, &imageCount, nullptr);
         ret->m_swapchain_images.resize(imageCount);
-        vkGetSwapchainImagesKHR(device->getHandle(), ret->m_swapchain, &imageCount, ret->m_swapchain_images.data());
+        vkGetSwapchainImagesKHR(device->GetHandle(), ret->m_swapchain, &imageCount, ret->m_swapchain_images.data());
 
         ret->m_swapchain_image_format = format.format;
         ret->m_swapchain_extent = extent;
@@ -131,7 +131,7 @@ namespace VWrap {
     Swapchain::~Swapchain() {
         std::cout << "Destroying Swapchain" << std::endl;
         if(m_swapchain != VK_NULL_HANDLE)
-		    vkDestroySwapchainKHR(m_device_ptr->getHandle(), m_swapchain, nullptr);
+		    vkDestroySwapchainKHR(m_device_ptr->GetHandle(), m_swapchain, nullptr);
 	}
 
 }

@@ -23,7 +23,7 @@ namespace VWrap {
         createInfo.subresourceRange.layerCount = 1;
         createInfo.subresourceRange.levelCount = 1;
 
-        if (vkCreateImageView(device->getHandle(), &createInfo, nullptr, &ret->m_image_view) != VK_SUCCESS) {
+        if (vkCreateImageView(device->GetHandle(), &createInfo, nullptr, &ret->m_image_view) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create texture image view!");
         }
         return ret;
@@ -31,6 +31,6 @@ namespace VWrap {
 
     ImageView::~ImageView() {
         if (m_image_view != VK_NULL_HANDLE)
-		    vkDestroyImageView(m_device_ptr->getHandle(), m_image_view, nullptr);
+		    vkDestroyImageView(m_device_ptr->GetHandle(), m_image_view, nullptr);
 	}
 }

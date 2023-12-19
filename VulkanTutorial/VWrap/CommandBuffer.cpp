@@ -4,7 +4,7 @@ namespace VWrap {
 
 	std::shared_ptr<CommandBuffer> CommandBuffer::Create(std::shared_ptr<CommandPool> command_pool, VkCommandBufferLevel level) {
 		auto ret = std::make_shared<CommandBuffer>();
-		ret->m_command_pool_ptr = command_pool;
+		ret->m_command_pool = command_pool;
 
 		VkCommandBufferAllocateInfo info{};
 		info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -12,7 +12,7 @@ namespace VWrap {
 		info.level = level;
 		info.commandBufferCount = 1;
 
-		if (vkAllocateCommandBuffers(command_pool->GetDevicePtr()->getHandle(), &info, &ret->m_command_buffer) != VK_SUCCESS) {
+		if (vkAllocateCommandBuffers(command_pool->GetDevice()->GetHandle(), &info, &ret->m_command_buffer) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to allocate command buffers!");
 		}
 
@@ -44,16 +44,10 @@ namespace VWrap {
 		info.commandBufferCount = 1;
 		info.pCommandBuffers = &command_buffer->m_command_buffer;
 
-		if (vkQueueSubmit(command_buffer->GetCommandPool()->GetQueuePtr()->GetHandle(), 1, &info, VK_NULL_HANDLE) != VK_SUCCESS) {
+		if (vkQueueSubmit(command_buffer->GetCommandPool()->GetQueue()->GetHandle(), 1, &info, VK_NULL_HANDLE) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to submit command buffer!");
 		}
 
-		vkQueueWaitIdle(command_buffer->GetCommandPool()->GetQueuePtr()->GetHandle());
-	}
-
-
-	CommandBuffer::~CommandBuffer() {
-		if (m_command_buffer != VK_NULL_HANDLE)
-			vkFreeCommandBuffers(m_command_pool_ptr->GetDevicePtr()->getHandle(), m_command_pool_ptr->GetHandle(), 1, &m_command_buffer);
+		vkQueueWaitIdle(command_buffer->GetCommandPool()->GetQueue()->GetHandle());
 	}
 }

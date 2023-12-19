@@ -10,7 +10,7 @@ namespace VWrap {
 		VkSemaphoreCreateInfo semaphoreInfo{};
 		semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-		if (vkCreateSemaphore(device->getHandle(), &semaphoreInfo, nullptr, &ret->m_semaphore) != VK_SUCCESS) {
+		if (vkCreateSemaphore(device->GetHandle(), &semaphoreInfo, nullptr, &ret->m_semaphore) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to create semaphore!");
 		}
 
@@ -19,6 +19,6 @@ namespace VWrap {
 
 	Semaphore::~Semaphore() {
 		if (m_semaphore != VK_NULL_HANDLE)
-			vkDestroySemaphore(m_device_ptr->getHandle(), m_semaphore, nullptr);
+			vkDestroySemaphore(m_device_ptr->GetHandle(), m_semaphore, nullptr);
 	}
 }

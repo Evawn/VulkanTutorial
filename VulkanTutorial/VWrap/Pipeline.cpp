@@ -125,7 +125,7 @@ namespace VWrap {
         pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
 
-        if (vkCreatePipelineLayout(device->getHandle(), &pipelineLayoutInfo, nullptr, &ret->m_pipeline_layout) != VK_SUCCESS) {
+        if (vkCreatePipelineLayout(device->GetHandle(), &pipelineLayoutInfo, nullptr, &ret->m_pipeline_layout) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create pipline layout!");
         }
 
@@ -159,12 +159,12 @@ namespace VWrap {
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
         pipelineInfo.basePipelineIndex = -1;
 
-        if (vkCreateGraphicsPipelines(device->getHandle(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &ret->m_pipeline) != VK_SUCCESS) {
+        if (vkCreateGraphicsPipelines(device->GetHandle(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &ret->m_pipeline) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create graphics pipeline!");
         }
 
-        vkDestroyShaderModule(device->getHandle(), vertShaderModule, nullptr);
-        vkDestroyShaderModule(device->getHandle(), fragShaderModule, nullptr);
+        vkDestroyShaderModule(device->GetHandle(), vertShaderModule, nullptr);
+        vkDestroyShaderModule(device->GetHandle(), fragShaderModule, nullptr);
 
         return ret;
 
@@ -181,7 +181,7 @@ namespace VWrap {
         createInfo.codeSize = code.size();
         createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
         VkShaderModule shaderModule;
-        if (vkCreateShaderModule(device->getHandle(), &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
+        if (vkCreateShaderModule(device->GetHandle(), &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create shader module!");
         }
         return shaderModule;
@@ -189,9 +189,9 @@ namespace VWrap {
 
     Pipeline::~Pipeline() {
         if (m_pipeline != VK_NULL_HANDLE)
-            vkDestroyPipeline(m_device_ptr->getHandle(), m_pipeline, nullptr);
+            vkDestroyPipeline(m_device_ptr->GetHandle(), m_pipeline, nullptr);
         if (m_pipeline_layout != VK_NULL_HANDLE)
-			vkDestroyPipelineLayout(m_device_ptr->getHandle(), m_pipeline_layout, nullptr);
+			vkDestroyPipelineLayout(m_device_ptr->GetHandle(), m_pipeline_layout, nullptr);
     }
 
 }

@@ -16,7 +16,7 @@ namespace VWrap {
         info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 
         VkPhysicalDeviceProperties properties{};
-        vkGetPhysicalDeviceProperties(device->getPhysicalDevicePtr()->getHandle(), &properties);
+        vkGetPhysicalDeviceProperties(device->GetPhysicalDevice()->getHandle(), &properties);
         info.anisotropyEnable = VK_TRUE;
         info.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
 
@@ -29,7 +29,7 @@ namespace VWrap {
         info.minLod = 0.0f;
         info.maxLod = 0.0f;
 
-        if (vkCreateSampler(device->getHandle(), &info, nullptr, &ret->m_sampler) != VK_SUCCESS) {
+        if (vkCreateSampler(device->GetHandle(), &info, nullptr, &ret->m_sampler) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create texture sampler!");
         }
 
@@ -38,6 +38,6 @@ namespace VWrap {
 
 	Sampler::~Sampler() {
 		if (m_sampler != VK_NULL_HANDLE)
-			vkDestroySampler(m_device_ptr->getHandle(), m_sampler, nullptr);
+			vkDestroySampler(m_device_ptr->GetHandle(), m_sampler, nullptr);
 	}
 }

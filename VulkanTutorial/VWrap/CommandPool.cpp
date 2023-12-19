@@ -5,14 +5,14 @@ namespace VWrap {
 	std::shared_ptr<CommandPool> CommandPool::Create(std::shared_ptr<Device> device, std::shared_ptr<Queue> queue)
 	{
 		auto ret = std::make_shared<CommandPool>();
-		ret->m_device_ptr = device;
-		ret->m_queue_ptr = queue;
+		ret->m_device = device;
+		ret->m_queue = queue;
 
 		VkCommandPoolCreateInfo info{};
 		info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		info.queueFamilyIndex = queue->GetQueueFamilyIndex();
 		info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-		if (vkCreateCommandPool(device->getHandle(), &info, nullptr, &ret->m_command_pool) != VK_SUCCESS) {
+		if (vkCreateCommandPool(device->GetHandle(), &info, nullptr, &ret->m_command_pool) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to create command pool!");
 		}
 
@@ -22,6 +22,6 @@ namespace VWrap {
 	CommandPool::~CommandPool()
 	{
 		if (m_command_pool != VK_NULL_HANDLE)
-			vkDestroyCommandPool(m_device_ptr->getHandle(), m_command_pool, nullptr);
+			vkDestroyCommandPool(m_device->GetHandle(), m_command_pool, nullptr);
 	}
 }

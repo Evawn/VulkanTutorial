@@ -2,20 +2,19 @@
 
 namespace VWrap {
 
-
     std::shared_ptr<Buffer> Buffer::Create(std::shared_ptr<Device> device,
         VkDeviceSize size,
         VkBufferUsageFlags usage,
         VkMemoryPropertyFlags properties) {
 
         auto ret = std::make_shared<Buffer>();
-        ret->m_device_ptr = device;
+        ret->m_device = device;
 
         VkBufferCreateInfo bufferInfo{};
         bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         bufferInfo.usage = usage;
 
-        QueueFamilyIndices indices = device->getPhysicalDevicePtr()->FindQueueFamilies();
+        QueueFamilyIndices indices = device->GetPhysicalDevice()->FindQueueFamilies();
 
         bufferInfo.sharingMode = VK_SHARING_MODE_CONCURRENT;
 
@@ -25,24 +24,24 @@ namespace VWrap {
 
         bufferInfo.size = size;
 
-        if (vkCreateBuffer(device->getHandle(), &bufferInfo, nullptr, &ret->m_buffer) != VK_SUCCESS) {
+        if (vkCreateBuffer(device->GetHandle(), &bufferInfo, nullptr, &ret->m_buffer) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create buffer");
         }
 
         VkMemoryRequirements memRequirements;
-        vkGetBufferMemoryRequirements(device->getHandle(), ret->m_buffer, &memRequirements);
+        vkGetBufferMemoryRequirements(device->GetHandle(), ret->m_buffer, &memRequirements);
 
         VkMemoryAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         allocInfo.allocationSize = memRequirements.size;
-        allocInfo.memoryTypeIndex = device->getPhysicalDevicePtr()->FindMemoryType(memRequirements.memoryTypeBits,
+        allocInfo.memoryTypeIndex = device->GetPhysicalDevice()->FindMemoryType(memRequirements.memoryTypeBits,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-        if (vkAllocateMemory(device->getHandle(), &allocInfo, nullptr, &ret->m_buffer_memory) != VK_SUCCESS) {
+        if (vkAllocateMemory(device->GetHandle(), &allocInfo, nullptr, &ret->m_buffer_memory) != VK_SUCCESS) {
             throw std::runtime_error("Failed to allocate buffer memory!");
         }
 
-        vkBindBufferMemory(device->getHandle(), ret->m_buffer, ret->m_buffer_memory, 0);
+        vkBindBufferMemory(device->GetHandle(), ret->m_buffer, ret->m_buffer_memory, 0);
 
         return ret;
     }
@@ -67,8 +66,8 @@ namespace VWrap {
 
 	Buffer::~Buffer() {
 		if (m_buffer != VK_NULL_HANDLE)
-			vkDestroyBuffer(m_device_ptr->getHandle(), m_buffer, nullptr);
+			vkDestroyBuffer(m_device->GetHandle(), m_buffer, nullptr);
 		if (m_buffer_memory != VK_NULL_HANDLE)
-			vkFreeMemory(m_device_ptr->getHandle(), m_buffer_memory, nullptr);
+			vkFreeMemory(m_device->GetHandle(), m_buffer_memory, nullptr);
 	}
 }

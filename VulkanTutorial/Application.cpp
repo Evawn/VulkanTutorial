@@ -1,26 +1,16 @@
 #include "Application.h"
 
-//#define TINYOBJLOADER_IMPLEMENTATION
-//#include "tiny_obj_loader.h"
-
-//#define TINYOBJLOADER_IMPLEMENTATION
-#include "tiny_obj_loader.h"
-
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-
-void HelloTriangleApplication::run() {
-	initWindow();
-	initVulkan();
-	mainLoop();
-	cleanup();
+void Application::Run() {
+	InitWindow();
+	InitVulkan();
+	MainLoop();
+	Cleanup();
 }
 
-void HelloTriangleApplication::initWindow() {
+void Application::InitWindow() {
 	glfwInit();
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-
 
 	m_glfw_window = std::make_shared<GLFWwindow*>(glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr));
 
@@ -28,18 +18,17 @@ void HelloTriangleApplication::initWindow() {
 	glfwSetFramebufferSizeCallback(m_glfw_window.get()[0], glfw_FramebufferResizeCallback);
 }
 
-void HelloTriangleApplication::glfw_FramebufferResizeCallback(GLFWwindow* window, int width, int height) {
-	auto app = reinterpret_cast<HelloTriangleApplication*>(glfwGetWindowUserPointer(window));
+void Application::glfw_FramebufferResizeCallback(GLFWwindow* window, int width, int height) {
+	auto app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
 	app->m_frame_controller->SetResized(true);
 }
 
-void HelloTriangleApplication::initVulkan() {
-	m_instance = VWrap::Instance::Create(enableValidationLayers);
+void Application::InitVulkan() {
+	m_instance = VWrap::Instance::Create(ENABLE_VALIDATION_LAYERS);
 	m_surface = VWrap::Surface::Create(m_instance, m_glfw_window);
 	m_physical_device = VWrap::PhysicalDevice::Pick(m_instance, m_surface);
-	m_device = VWrap::Device::Create(m_physical_device, enableValidationLayers);
+	m_device = VWrap::Device::Create(m_physical_device, ENABLE_VALIDATION_LAYERS);
 
-	// Get handle for queue
 	VWrap::QueueFamilyIndices indices = m_physical_device->FindQueueFamilies();
 
 	m_graphics_queue = VWrap::Queue::Create(m_device, indices.graphicsFamily.value());
@@ -64,20 +53,20 @@ void HelloTriangleApplication::initVulkan() {
 		MAX_FRAMES_IN_FLIGHT);
 }
 
-void HelloTriangleApplication::mainLoop() {
+void Application::MainLoop() {
 	while (!glfwWindowShouldClose(m_glfw_window.get()[0])) {
 		glfwPollEvents();
-		drawFrame();
+		DrawFrame();
 	}
-	vkDeviceWaitIdle(m_device->getHandle());
+	vkDeviceWaitIdle(m_device->GetHandle());
 }
 
-void HelloTriangleApplication::cleanup() {
+void Application::Cleanup() {
 	glfwDestroyWindow(m_glfw_window.get()[0]);
 	glfwTerminate();
 }
 
-void HelloTriangleApplication::drawFrame() {
+void Application::DrawFrame() {
 	// ACQUIRE FRAME ------------------------------------------------
 	m_frame_controller->AcquireNext();
 	uint32_t image_index = m_frame_controller->GetImageIndex();
@@ -113,32 +102,34 @@ void HelloTriangleApplication::drawFrame() {
 	vkCmdBeginRenderPass(command_buffer->GetHandle(), &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	// RECORD COMMANDS ------------------------------------------------
-	m_mesh_rasterizer->recordCommandBuffer(command_buffer->GetHandle(), frame_index);
-	m_mesh_rasterizer->updateUniformBuffer(frame_index);
+	m_mesh_rasterizer->CmdDraw(command_buffer, frame_index);
+	m_mesh_rasterizer->UpdateUniformBuffer(frame_index);
+
+	// END RENDER PASS - TODO: ABSTRACT ------------------------------------------------
+	vkCmdEndRenderPass(command_buffer->GetHandle());
+
+	if (vkEndCommandBuffer(command_buffer->GetHandle()) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to end command buffer recording!");
+	}
 
 	// RENDER -----------------------------------
 	m_frame_controller->Render();
 }
 
-void HelloTriangleApplication::Resize() {
+void Application::Resize() {
 	CreateDepthResources();
 	CreateFramebuffers();
 	m_mesh_rasterizer->Resize(m_frame_controller->GetSwapchain()->getExtent());
 }
 
-/// <summary>
-/// Creates a framebuffer for every image view and stores them in 'framebuffers'
-/// </summary>
-void HelloTriangleApplication::CreateFramebuffers() {
+void Application::CreateFramebuffers() {
 	m_framebuffers.resize(m_frame_controller->GetSwapchain()->getImageCount());
 	for (uint32_t i = 0; i < m_frame_controller->GetSwapchain()->getImageCount(); i++)
 		m_framebuffers[i] = VWrap::Framebuffer::Create2D(m_device, m_render_pass, m_frame_controller->GetImageViews()[i], m_depth_image_view, m_frame_controller->GetSwapchain()->getExtent());
 }
 
-
-void HelloTriangleApplication::CreateDepthResources()
+void Application::CreateDepthResources()
 {
 	auto im = VWrap::Image::CreateDepthImage(m_device, m_graphics_command_pool, m_frame_controller->GetSwapchain()->getExtent());
-	//m_depth_image = VWrap::Image::CreateDepthImage(m_device, m_graphics_command_pool, m_frame_controller->GetSwapchain()->getExtent());
 	m_depth_image_view = VWrap::ImageView::Create(m_device, im, VK_IMAGE_ASPECT_DEPTH_BIT);
 }

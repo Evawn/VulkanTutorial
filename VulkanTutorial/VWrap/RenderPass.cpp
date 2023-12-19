@@ -59,7 +59,7 @@ namespace VWrap {
         renderPassInfo.dependencyCount = 1;
         renderPassInfo.pDependencies = &dependency;
 
-        if (vkCreateRenderPass(device->getHandle(), &renderPassInfo, nullptr, &ret->m_render_pass) != VK_SUCCESS) {
+        if (vkCreateRenderPass(device->GetHandle(), &renderPassInfo, nullptr, &ret->m_render_pass) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create render pass!");
         }
 
@@ -69,7 +69,7 @@ namespace VWrap {
 
     RenderPass::~RenderPass() {
         if (m_render_pass != VK_NULL_HANDLE)
-		    vkDestroyRenderPass(m_device_ptr->getHandle(), m_render_pass, nullptr);
+		    vkDestroyRenderPass(m_device_ptr->GetHandle(), m_render_pass, nullptr);
 	}
 
 }

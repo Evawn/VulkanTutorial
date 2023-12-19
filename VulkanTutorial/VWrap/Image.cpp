@@ -25,22 +25,22 @@ namespace VWrap {
         imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
         imageInfo.flags = 0; // Optional
 
-        if (vkCreateImage(device->getHandle(), &imageInfo, nullptr, &ret->m_image) != VK_SUCCESS) {
+        if (vkCreateImage(device->GetHandle(), &imageInfo, nullptr, &ret->m_image) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create image!");
         }
 
         VkMemoryRequirements imageMemReq;
-        vkGetImageMemoryRequirements(device->getHandle(), ret->m_image, &imageMemReq);
+        vkGetImageMemoryRequirements(device->GetHandle(), ret->m_image, &imageMemReq);
 
         VkMemoryAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         allocInfo.allocationSize = imageMemReq.size;
-        allocInfo.memoryTypeIndex = device->getPhysicalDevicePtr()->FindMemoryType(imageMemReq.memoryTypeBits, info.properties);
+        allocInfo.memoryTypeIndex = device->GetPhysicalDevice()->FindMemoryType(imageMemReq.memoryTypeBits, info.properties);
 
-        if (vkAllocateMemory(device->getHandle(), &allocInfo, nullptr, &ret->m_image_memory) != VK_SUCCESS) {
+        if (vkAllocateMemory(device->GetHandle(), &allocInfo, nullptr, &ret->m_image_memory) != VK_SUCCESS) {
             throw std::runtime_error("Failed to allocate device memory for image!");
         }
-        vkBindImageMemory(device->getHandle(), ret->m_image, ret->m_image_memory, 0);
+        vkBindImageMemory(device->GetHandle(), ret->m_image, ret->m_image_memory, 0);
 
 		return ret;
 	}
@@ -57,9 +57,9 @@ namespace VWrap {
         auto staging_buffer = Buffer::CreateStaging(device, imageSize);
 
         void* data;
-        vkMapMemory(device->getHandle(), staging_buffer->GetMemory(), 0, imageSize, 0, &data);
+        vkMapMemory(device->GetHandle(), staging_buffer->GetMemory(), 0, imageSize, 0, &data);
         memcpy(data, pixels, static_cast<size_t>(imageSize));
-        vkUnmapMemory(device->getHandle(), staging_buffer->GetMemory());
+        vkUnmapMemory(device->GetHandle(), staging_buffer->GetMemory());
         stbi_image_free(pixels);
 
         VWrap::ImageCreateInfo info{};
@@ -98,7 +98,7 @@ namespace VWrap {
     {
         for (VkFormat format : candidates) {
             VkFormatProperties props;
-            vkGetPhysicalDeviceFormatProperties(device->getPhysicalDevicePtr()->getHandle(), format, &props);
+            vkGetPhysicalDeviceFormatProperties(device->GetPhysicalDevice()->getHandle(), format, &props);
 
             if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
                 return format;
@@ -213,10 +213,10 @@ namespace VWrap {
 
     Image::~Image() {
         if (m_image != VK_NULL_HANDLE) 
-			vkDestroyImage(m_device_ptr->getHandle(), m_image, nullptr);
+			vkDestroyImage(m_device_ptr->GetHandle(), m_image, nullptr);
 			
 		
 		if (m_image_memory != VK_NULL_HANDLE) 
-            vkFreeMemory(m_device_ptr->getHandle(), m_image_memory, nullptr);
+            vkFreeMemory(m_device_ptr->GetHandle(), m_image_memory, nullptr);
     }
 }
