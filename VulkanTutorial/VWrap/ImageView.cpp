@@ -3,7 +3,9 @@
 namespace VWrap {
 
     std::shared_ptr<ImageView> ImageView::Create(std::shared_ptr<Device> device, std::shared_ptr<Image> image, VkImageAspectFlags aspect) {
-        return Create(device, image->GetHandle(), image->GetFormat(), aspect); 
+        auto ret = Create(device, image->GetHandle(), image->GetFormat(), aspect);
+        ret->m_image_ptr = image;
+        return ret; 
     }
 
     std::shared_ptr<ImageView> ImageView::Create(std::shared_ptr<Device> device, VkImage image, VkFormat format, VkImageAspectFlags aspect) {
@@ -21,7 +23,6 @@ namespace VWrap {
         createInfo.subresourceRange.layerCount = 1;
         createInfo.subresourceRange.levelCount = 1;
 
-        VkImageView imageView;
         if (vkCreateImageView(device->getHandle(), &createInfo, nullptr, &ret->m_image_view) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create texture image view!");
         }

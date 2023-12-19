@@ -43,6 +43,14 @@ namespace VWrap {
         inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         inputAssembly.primitiveRestartEnable = VK_FALSE;
 
+        VkPipelineDynamicStateCreateInfo dynamicState{};
+        dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+        std::array<VkDynamicState, 2> dynamicStates = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+        dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+        dynamicState.pDynamicStates = dynamicStates.data();
+        
+
+
         // TODO : add dynamic state for viewport at least
         VkViewport viewport{};
         viewport.x = 0.0f;
@@ -111,7 +119,7 @@ namespace VWrap {
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 
         std::array<VkDescriptorSetLayout, 1> descriptor_set_layout_handles = { descriptor_set_layout->GetHandle() };
-        pipelineLayoutInfo.setLayoutCount = descriptor_set_layout_handles.size();
+        pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptor_set_layout_handles.size());
         pipelineLayoutInfo.pSetLayouts = descriptor_set_layout_handles.data();
         pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
         pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
@@ -144,7 +152,7 @@ namespace VWrap {
         pipelineInfo.pMultisampleState = &multisampling;
         pipelineInfo.pDepthStencilState = &depthStencil;
         pipelineInfo.pColorBlendState = &colorBlending;
-        pipelineInfo.pDynamicState = nullptr; // TODO: replace with dynamic state
+        pipelineInfo.pDynamicState = &dynamicState; 
         pipelineInfo.layout = ret->m_pipeline_layout;
         pipelineInfo.renderPass = render_pass->GetHandle();
         pipelineInfo.subpass = 0;

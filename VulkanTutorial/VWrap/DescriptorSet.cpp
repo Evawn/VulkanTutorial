@@ -29,7 +29,7 @@ namespace VWrap {
 			vk_layouts[i] = layouts[i]->GetHandle();
 
 		allocInfo.pSetLayouts = vk_layouts.data();
-		allocInfo.descriptorSetCount = count;
+		allocInfo.descriptorSetCount = static_cast<uint32_t>(count);
 
 		// Allocate the descriptor sets
 		if (vkAllocateDescriptorSets(descriptor_pool->GetDevicePtr()->getHandle(), &allocInfo, handles.data()) != VK_SUCCESS) {

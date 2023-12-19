@@ -141,6 +141,7 @@
   <ItemGroup>
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MeshRasterizer.cpp" />
     <ClCompile Include="VWrap\Buffer.cpp" />
     <ClCompile Include="VWrap\CommandBuffer.cpp" />
     <ClCompile Include="VWrap\CommandPool.cpp" />
@@ -150,6 +151,7 @@
     <ClCompile Include="VWrap\Device.cpp" />
     <ClCompile Include="VWrap\Fence.cpp" />
     <ClCompile Include="VWrap\Framebuffer.cpp" />
+    <ClCompile Include="VWrap\FrameController.cpp" />
     <ClCompile Include="VWrap\Image.cpp" />
     <ClCompile Include="VWrap\ImageView.cpp" />
     <ClCompile Include="VWrap\Instance.cpp" />
@@ -169,6 +171,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h" />
+    <ClInclude Include="MeshRasterizer.h" />
     <ClInclude Include="VWrap\Buffer.h" />
     <ClInclude Include="VWrap\CommandBuffer.h" />
     <ClInclude Include="VWrap\CommandPool.h" />
@@ -178,6 +181,7 @@
     <ClInclude Include="VWrap\Device.h" />
     <ClInclude Include="VWrap\Fence.h" />
     <ClInclude Include="VWrap\Framebuffer.h" />
+    <ClInclude Include="VWrap\FrameController.h" />
     <ClInclude Include="VWrap\Image.h" />
     <ClInclude Include="VWrap\ImageView.h" />
     <ClInclude Include="VWrap\Instance.h" />

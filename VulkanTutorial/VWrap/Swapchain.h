@@ -49,5 +49,9 @@ namespace VWrap {
 			return m_swapchain_images;
 		}
 
+		size_t getImageCount() const {
+			return m_swapchain_images.size();
+		}
+
 	};
 }

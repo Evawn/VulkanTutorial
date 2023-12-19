@@ -10,6 +10,7 @@ namespace VWrap {
 	private:
 		VkImageView m_image_view{ VK_NULL_HANDLE };
 		std::shared_ptr<Device> m_device_ptr;
+		std::shared_ptr<Image> m_image_ptr;
 
 	public:
 

@@ -179,8 +179,6 @@ namespace VWrap {
             barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         }
 
-        // use graphics command buffer here
-
         auto graphics_command_buffer = VWrap::CommandBuffer::BeginSingleTimeCommands(m_graphics_pool_ptr);
         vkCmdPipelineBarrier(
             graphics_command_buffer->GetHandle(),

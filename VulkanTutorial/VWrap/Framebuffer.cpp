@@ -4,6 +4,10 @@ namespace VWrap {
 	std::shared_ptr<Framebuffer> Framebuffer::Create2D(std::shared_ptr<Device> device, std::shared_ptr<RenderPass> render_pass, std::shared_ptr<ImageView> color_attachment, std::shared_ptr<ImageView> depth_attachment, VkExtent2D extent) {
 		auto ret = std::make_shared<Framebuffer>();
 		ret->m_device_ptr = device;
+		ret->m_extent = extent;
+		ret->m_render_pass_ptr = render_pass;
+		ret->m_attachments.push_back(color_attachment);
+		ret->m_attachments.push_back(depth_attachment);
 
 		VkFramebufferCreateInfo createInfo{};
 		

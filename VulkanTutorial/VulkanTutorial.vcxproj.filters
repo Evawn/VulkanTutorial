@@ -90,6 +90,12 @@
     <ClCompile Include="VWrap\Queue.cpp">
       <Filter>VWrap\Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MeshRasterizer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VWrap\FrameController.cpp">
+      <Filter>VWrap\Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\shader.vert" />
@@ -163,6 +169,12 @@
       <Filter>VWrap\Header Files</Filter>
     </ClInclude>
     <ClInclude Include="VWrap\Queue.h">
+      <Filter>VWrap\Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshRasterizer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VWrap\FrameController.h">
       <Filter>VWrap\Header Files</Filter>
     </ClInclude>
   </ItemGroup>
