@@ -27,7 +27,7 @@ namespace VWrap {
         info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
         info.mipLodBias = 0.0f;
         info.minLod = 0.0f;
-        info.maxLod = 0.0f;
+        info.maxLod = 10.0f;
 
         if (vkCreateSampler(device->GetHandle(), &info, nullptr, &ret->m_sampler) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create texture sampler!");

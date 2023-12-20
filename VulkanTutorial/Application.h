@@ -92,6 +92,7 @@ private:
 	std::shared_ptr<VWrap::RenderPass> m_render_pass;
 	std::vector<std::shared_ptr<VWrap::Framebuffer>> m_framebuffers;
 	std::shared_ptr<VWrap::ImageView> m_depth_image_view;
+	std::shared_ptr<VWrap::ImageView> m_color_image_view;
 
 	/// <summary>
 	/// Contains and manages the resources needed to render a mesh with rasterization.
@@ -146,7 +147,9 @@ private:
 	/// <summary>
 	/// Creates the depth image and image view.
 	/// </summary>
-	void CreateDepthResources();
+	void CreateDepthResources(VkSampleCountFlagBits samples);
+
+	void CreateColorResources(VkSampleCountFlagBits samples);
 
 	/// <summary>
 	/// Acquires the current image and frame, records the command buffer, and submits its to be rendered.

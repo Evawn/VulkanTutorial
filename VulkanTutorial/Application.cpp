@@ -40,9 +40,12 @@ void Application::InitVulkan() {
 	m_frame_controller = VWrap::FrameController::Create(m_device, m_surface, m_graphics_command_pool, m_present_queue, MAX_FRAMES_IN_FLIGHT);
 	m_frame_controller->SetResizeCallback([this]() { Resize(); });
 
-	m_render_pass = VWrap::RenderPass::Create(m_device, m_frame_controller->GetSwapchain()->getFormat());
+	VkSampleCountFlagBits sample_count = m_physical_device->GetMaxUsableSampleCount();
 
-	CreateDepthResources();
+	m_render_pass = VWrap::RenderPass::Create(m_device, m_frame_controller->GetSwapchain()->getFormat(), sample_count);
+
+	CreateColorResources(sample_count);
+	CreateDepthResources(sample_count);
 	CreateFramebuffers();
 
 	m_mesh_rasterizer = MeshRasterizer::Create(
@@ -117,19 +120,55 @@ void Application::DrawFrame() {
 }
 
 void Application::Resize() {
-	CreateDepthResources();
+	CreateColorResources(m_render_pass->GetSamples());
+	CreateDepthResources(m_render_pass->GetSamples());
 	CreateFramebuffers();
 	m_mesh_rasterizer->Resize(m_frame_controller->GetSwapchain()->getExtent());
 }
 
 void Application::CreateFramebuffers() {
 	m_framebuffers.resize(m_frame_controller->GetSwapchain()->getImageCount());
-	for (uint32_t i = 0; i < m_frame_controller->GetSwapchain()->getImageCount(); i++)
-		m_framebuffers[i] = VWrap::Framebuffer::Create2D(m_device, m_render_pass, m_frame_controller->GetImageViews()[i], m_depth_image_view, m_frame_controller->GetSwapchain()->getExtent());
+	for (uint32_t i = 0; i < m_frame_controller->GetSwapchain()->getImageCount(); i++){
+		std::vector<std::shared_ptr<VWrap::ImageView>> attachments = {
+			m_color_image_view,
+			m_depth_image_view,
+			m_frame_controller->GetImageViews()[i]
+		};
+
+		m_framebuffers[i] = VWrap::Framebuffer::Create2D(m_device, m_render_pass, attachments, m_frame_controller->GetSwapchain()->getExtent());
+	}
 }
 
-void Application::CreateDepthResources()
+void Application::CreateDepthResources(VkSampleCountFlagBits samples)
 {
-	auto im = VWrap::Image::CreateDepthImage(m_device, m_graphics_command_pool, m_frame_controller->GetSwapchain()->getExtent());
+	VkFormat depthFormat = VWrap::Image::FindDepthFormat(m_device);
+
+	VWrap::ImageCreateInfo info{};
+	info.format = depthFormat;
+	info.height = m_frame_controller->GetSwapchain()->getExtent().height;
+	info.width = m_frame_controller->GetSwapchain()->getExtent().width;
+	info.tiling = VK_IMAGE_TILING_OPTIMAL;
+	info.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+	info.properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+	info.mip_levels = 1;
+	info.samples = samples;
+
+	auto im = VWrap::Image::Create(m_device, m_graphics_command_pool, info);
 	m_depth_image_view = VWrap::ImageView::Create(m_device, im, VK_IMAGE_ASPECT_DEPTH_BIT);
+}
+
+void Application::CreateColorResources(VkSampleCountFlagBits samples) 
+{
+	VWrap::ImageCreateInfo info{};
+	info.format = m_frame_controller->GetSwapchain()->getFormat();
+	info.height = m_frame_controller->GetSwapchain()->getExtent().height;
+	info.width = m_frame_controller->GetSwapchain()->getExtent().width;
+	info.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
+	info.mip_levels = 1;
+	info.properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+	info.tiling = VK_IMAGE_TILING_OPTIMAL;
+	info.samples = samples;
+
+	auto im = VWrap::Image::Create(m_device, m_graphics_command_pool, info);
+	m_color_image_view = VWrap::ImageView::Create(m_device, im, VK_IMAGE_ASPECT_COLOR_BIT);
 }

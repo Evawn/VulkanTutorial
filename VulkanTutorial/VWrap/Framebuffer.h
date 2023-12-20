@@ -44,7 +44,7 @@ namespace VWrap {
 		/// <summary>
 		/// Creates a new 2D framebuffer from the given device, that is compaitble with the given render pass, and has the given color and depth attachments
 		/// </summary>
-		static std::shared_ptr<Framebuffer> Create2D(std::shared_ptr<Device> device, std::shared_ptr<RenderPass> render_pass, std::shared_ptr<ImageView> color_attachment, std::shared_ptr<ImageView> depth_attachment, VkExtent2D extent);
+		static std::shared_ptr<Framebuffer> Create2D(std::shared_ptr<Device> device, std::shared_ptr<RenderPass> render_pass, std::vector<std::shared_ptr<ImageView>> attachments, VkExtent2D extent);
 
 		/// <summary>
 		/// Gets the underlying vulkan framebuffer

@@ -11,20 +11,6 @@
 namespace VWrap
 {
 
-
-    ///// <summary>
-///// Creates a VkSurface and stores it in surface
-///// </summary>
-//void HelloTriangleApplication::createSurface() {
-//    if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
-//        throw std::runtime_error("Failed to create window surface!");
-//    }
-//}
-
-
-
-
-
 	class PhysicalDevice
 	{
 	private:
@@ -44,8 +30,9 @@ namespace VWrap
 
         SwapchainSupportDetails QuerySwapchainSupport();
 
+		VkSampleCountFlagBits GetMaxUsableSampleCount();
+
         bool checkDeviceExtensions();
 
 	};
-
 }

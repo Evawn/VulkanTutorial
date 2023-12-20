@@ -151,8 +151,6 @@ std::shared_ptr<MeshRasterizer> MeshRasterizer::Create(std::shared_ptr<VWrap::De
 
 	ret->UpdateDescriptorSets();
 
-
-
 	return ret;
 }
 
