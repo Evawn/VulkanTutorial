@@ -3,6 +3,8 @@
 #include "stb_image.h"
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
+#define VMA_IMPLEMENTATION
+#include "vk_mem_alloc.h"
 
 /// <summary>
 /// Entry point of our application. Creates the app, and runs it while catching any exceptions.

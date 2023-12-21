@@ -24,7 +24,7 @@ project "VulkanTutorial"
 
     local glfw = os.getenv("GLFW")
     local vulkanSDK = os.getenv("VULKAN_SDK")
-    libdirs { vulkanSDK .. "/Lib", glfw .. "/Lib" }
+    libdirs { vulkanSDK .. "/Lib", glfw .. "/lib-vc2022" }
 
     links { "vulkan-1", "glfw3"}
 
