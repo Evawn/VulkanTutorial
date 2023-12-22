@@ -5,7 +5,7 @@ namespace VWrap {
     std::shared_ptr<Pipeline> Pipeline::Create(std::shared_ptr<Device> device, std::shared_ptr<RenderPass> render_pass, std::shared_ptr<DescriptorSetLayout> descriptor_set_layout, VkExtent2D extent){
 
         auto ret = std::make_shared<Pipeline>();
-        ret->m_device_ptr = device;
+        ret->m_device = device;
 
         auto vertShaderCode = readFile("../shaders/vert.spv");
         auto fragShaderCode = readFile("../shaders/frag.spv");
@@ -49,9 +49,6 @@ namespace VWrap {
         dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
         dynamicState.pDynamicStates = dynamicStates.data();
         
-
-
-        // TODO : add dynamic state for viewport at least
         VkViewport viewport{};
         viewport.x = 0.0f;
         viewport.y = 0.0f;
@@ -154,7 +151,7 @@ namespace VWrap {
         pipelineInfo.pColorBlendState = &colorBlending;
         pipelineInfo.pDynamicState = &dynamicState; 
         pipelineInfo.layout = ret->m_pipeline_layout;
-        pipelineInfo.renderPass = render_pass->GetHandle();
+        pipelineInfo.renderPass = render_pass->Get();
         pipelineInfo.subpass = 0;
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
         pipelineInfo.basePipelineIndex = -1;
@@ -167,14 +164,8 @@ namespace VWrap {
         vkDestroyShaderModule(device->GetHandle(), fragShaderModule, nullptr);
 
         return ret;
-
     }
 
-    /// <summary>
-/// Creates and returns a shader module from the given 'code'
-/// </summary>
-/// <param name="code"> The bytecode from which to create the shader module. </param>
-/// <returns> The create shader modules corresponding to 'code' </returns>
     VkShaderModule Pipeline::CreateShaderModule(std::shared_ptr<Device> device, const std::vector<char>& code) {
         VkShaderModuleCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -189,9 +180,9 @@ namespace VWrap {
 
     Pipeline::~Pipeline() {
         if (m_pipeline != VK_NULL_HANDLE)
-            vkDestroyPipeline(m_device_ptr->GetHandle(), m_pipeline, nullptr);
+            vkDestroyPipeline(m_device->GetHandle(), m_pipeline, nullptr);
         if (m_pipeline_layout != VK_NULL_HANDLE)
-			vkDestroyPipelineLayout(m_device_ptr->GetHandle(), m_pipeline_layout, nullptr);
+			vkDestroyPipelineLayout(m_device->GetHandle(), m_pipeline_layout, nullptr);
     }
 
 }

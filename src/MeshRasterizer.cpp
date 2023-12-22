@@ -3,8 +3,7 @@
 inline void MeshRasterizer::CreateVertexBuffer() {
 	VkDeviceSize bufferSize = sizeof(m_vertices[0]) * m_vertices.size();
 
-	auto staging_buffer = VWrap::Buffer::CreateStaging(m_allocator, m_device,
-		bufferSize);
+	auto staging_buffer = VWrap::Buffer::CreateStaging(m_allocator, bufferSize);
 
 	void* data;
 	vmaMapMemory(m_allocator->Get(), staging_buffer->GetAllocation(), &data);
@@ -12,10 +11,10 @@ inline void MeshRasterizer::CreateVertexBuffer() {
 	vmaUnmapMemory(m_allocator->Get(), staging_buffer->GetAllocation());
 
 	m_vertex_buffer = VWrap::Buffer::Create(m_allocator,
-		m_device,
 		bufferSize,
 		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		0);
 
 	m_vertex_buffer->CopyFromBuffer(m_graphics_pool, staging_buffer, bufferSize);
 }
@@ -23,8 +22,7 @@ inline void MeshRasterizer::CreateVertexBuffer() {
 inline void MeshRasterizer::CreateIndexBuffer() {
 	VkDeviceSize bufferSize = sizeof(m_indices[0]) * m_indices.size();
 
-	auto staging_buffer = VWrap::Buffer::CreateStaging(m_allocator, m_device,
-		bufferSize);
+	auto staging_buffer = VWrap::Buffer::CreateStaging(m_allocator, bufferSize);
 
 	void* data;
 	vmaMapMemory(m_allocator->Get(), staging_buffer->GetAllocation(), &data);
@@ -32,10 +30,10 @@ inline void MeshRasterizer::CreateIndexBuffer() {
 	vmaUnmapMemory(m_allocator->Get(), staging_buffer->GetAllocation());
 
 	m_index_buffer = VWrap::Buffer::Create(m_allocator,
-		m_device,
 		bufferSize,
 		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		0);
 
 	m_index_buffer->CopyFromBuffer(m_graphics_pool, staging_buffer, bufferSize);
 }
@@ -50,7 +48,6 @@ inline void MeshRasterizer::CreateUniformBuffers() {
 		//VmaAllocationInfo alloc_info{};
 		m_uniform_buffers[i] = VWrap::Buffer::CreateMapped(
 			m_allocator,
-			m_device,
 			bufferSize,
 			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -67,8 +64,8 @@ inline void MeshRasterizer::UpdateDescriptorSets() {
 
 		VkDescriptorImageInfo imageInfo{};
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo.imageView = m_texture_image_view->GetHandle();
-		imageInfo.sampler = m_sampler->GetHandle();
+		imageInfo.imageView = m_texture_image_view->Get();
+		imageInfo.sampler = m_sampler->Get();
 
 		// array of descriptor writes:
 		std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
@@ -143,7 +140,7 @@ std::shared_ptr<MeshRasterizer> MeshRasterizer::Create(std::shared_ptr<VWrap::Al
 	ret->m_pipeline = VWrap::Pipeline::Create(device, render_pass, ret->m_descriptor_set_layout, extent);
 	ret->m_sampler = VWrap::Sampler::Create(device);
 
-	ret->m_texture_image = VWrap::Image::Texture2DFromFile(allocator, device, graphics_pool, TEXTURE_PATH.data());
+	ret->m_texture_image = VWrap::Image::Texture2DFromFile(allocator, graphics_pool, TEXTURE_PATH.data());
 	ret->m_texture_image_view = VWrap::ImageView::Create(device, ret->m_texture_image);
 
 
@@ -163,10 +160,10 @@ std::shared_ptr<MeshRasterizer> MeshRasterizer::Create(std::shared_ptr<VWrap::Al
 
 void MeshRasterizer::CmdDraw(std::shared_ptr<VWrap::CommandBuffer> command_buffer, uint32_t frame) {
 	auto vk_command_buffer = command_buffer->GetHandle();
-	vkCmdBindPipeline(vk_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline->GetHandle());
+	vkCmdBindPipeline(vk_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline->Get());
 
 	std::array<VkDescriptorSet, 1> descriptorSets = { m_descriptor_sets[frame]->GetHandle() };
-	vkCmdBindDescriptorSets(vk_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline->GetLayoutHandle(), 0, 1, descriptorSets.data(), 0, nullptr);
+	vkCmdBindDescriptorSets(vk_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline->GetLayout(), 0, 1, descriptorSets.data(), 0, nullptr);
 
 	VkViewport viewport{};
 	viewport.height = (float)m_extent.height;

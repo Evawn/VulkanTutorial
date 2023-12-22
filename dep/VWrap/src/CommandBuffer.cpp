@@ -43,10 +43,10 @@ namespace VWrap {
 		info.commandBufferCount = 1;
 		info.pCommandBuffers = &command_buffer->m_command_buffer;
 
-		if (vkQueueSubmit(command_buffer->GetCommandPool()->GetQueue()->GetHandle(), 1, &info, VK_NULL_HANDLE) != VK_SUCCESS) {
+		if (vkQueueSubmit(command_buffer->GetCommandPool()->GetQueue()->Get(), 1, &info, VK_NULL_HANDLE) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to submit command buffer!");
 		}
 
-		vkQueueWaitIdle(command_buffer->GetCommandPool()->GetQueue()->GetHandle());
+		vkQueueWaitIdle(command_buffer->GetCommandPool()->GetQueue()->Get());
 	}
 }

@@ -21,7 +21,7 @@ namespace VWrap {
 		vkWaitForFences(m_device->GetHandle(), 1, fences, VK_TRUE, UINT64_MAX);
 
 		//uint32_t imageIndex;
-		VkResult result = vkAcquireNextImageKHR(m_device->GetHandle(), m_swapchain->getHandle(), UINT64_MAX, m_image_available_semaphores[m_current_frame]->GetHandle(), VK_NULL_HANDLE, &m_image_index);
+		VkResult result = vkAcquireNextImageKHR(m_device->GetHandle(), m_swapchain->Get(), UINT64_MAX, m_image_available_semaphores[m_current_frame]->Get(), VK_NULL_HANDLE, &m_image_index);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR) {
 			RecreateSwapchain();
@@ -38,7 +38,7 @@ namespace VWrap {
 		VkSubmitInfo submitInfo{};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-		VkSemaphore waitSemaphores[] = { m_image_available_semaphores[m_current_frame]->GetHandle() };
+		VkSemaphore waitSemaphores[] = { m_image_available_semaphores[m_current_frame]->Get() };
 		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 		submitInfo.waitSemaphoreCount = 1;
 		submitInfo.pWaitSemaphores = waitSemaphores;
@@ -49,14 +49,14 @@ namespace VWrap {
 		std::array<VkCommandBuffer, 1> commandBuffers = { m_command_buffers[m_current_frame]->GetHandle() };
 		submitInfo.pCommandBuffers = commandBuffers.data();
 
-		VkSemaphore signalSemaphores[] = { m_render_finished_semaphores[m_current_frame]->GetHandle() };
+		VkSemaphore signalSemaphores[] = { m_render_finished_semaphores[m_current_frame]->Get() };
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = signalSemaphores;
 
 		VkFence fences[] = { m_in_flight_fences[m_current_frame]->GetHandle() };
 		vkResetFences(m_device->GetHandle(), 1, fences);
 
-		if (vkQueueSubmit(m_graphics_command_pool->GetQueue()->GetHandle(),
+		if (vkQueueSubmit(m_graphics_command_pool->GetQueue()->Get(),
 			1,
 			&submitInfo,
 			m_in_flight_fences[m_current_frame]->GetHandle()) != VK_SUCCESS) {
@@ -69,13 +69,13 @@ namespace VWrap {
 		presentInfo.waitSemaphoreCount = 1;
 		presentInfo.pWaitSemaphores = signalSemaphores;
 
-		VkSwapchainKHR swapchains[] = { m_swapchain->getHandle() };
+		VkSwapchainKHR swapchains[] = { m_swapchain->Get() };
 		presentInfo.swapchainCount = 1;
 		presentInfo.pSwapchains = swapchains;
 		presentInfo.pImageIndices = &m_image_index;
 		presentInfo.pResults = nullptr; // Optional
 
-		VkResult result = vkQueuePresentKHR(m_present_queue->GetHandle(), &presentInfo);
+		VkResult result = vkQueuePresentKHR(m_present_queue->Get(), &presentInfo);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || resized) {
 			resized = false;
@@ -91,9 +91,9 @@ namespace VWrap {
 	void FrameController::RecreateSwapchain() {
 		int width = 0, height = 0;
 
-		glfwGetFramebufferSize(m_surface->getWindowPtr().get()[0], &width, &height);
+		glfwGetFramebufferSize(m_surface->GetWindow().get()[0], &width, &height);
 		while (width == 0 || height == 0) {
-			glfwGetFramebufferSize(m_surface->getWindowPtr().get()[0], &width, &height);
+			glfwGetFramebufferSize(m_surface->GetWindow().get()[0], &width, &height);
 			glfwWaitEvents();
 		}
 		vkDeviceWaitIdle(m_device->GetHandle());
@@ -111,9 +111,9 @@ namespace VWrap {
 	}
 
 	void FrameController::CreateImageViews() {
-		m_image_views.resize(m_swapchain->getImageCount());
-		for (size_t i = 0; i < m_swapchain->getImageCount(); i++)
-			m_image_views[i] = VWrap::ImageView::Create(m_device, m_swapchain->getImageHandles()[i], m_swapchain->getFormat());
+		m_image_views.resize(m_swapchain->Size());
+		for (size_t i = 0; i < m_swapchain->Size(); i++)
+			m_image_views[i] = VWrap::ImageView::Create(m_device, m_swapchain->GetVkImages()[i], m_swapchain->GetFormat());
 	}
 
 	void FrameController::CreateCommandBuffers() {

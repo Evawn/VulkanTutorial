@@ -44,7 +44,7 @@ namespace VWrap {
             createInfo.enabledLayerCount = 0;
         }
 
-        if (vkCreateDevice(physical_device->getHandle(), &createInfo, nullptr, &ret->m_device) != VK_SUCCESS) {
+        if (vkCreateDevice(physical_device->Get(), &createInfo, nullptr, &ret->m_device) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create logical device!");
         }
 

@@ -10,31 +10,50 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
 
-
-
 namespace VWrap {
 
+	/// <summary>
+	/// A struct containing the indices of the queue families that support the operations we need.
+	/// </summary>
 	struct QueueFamilyIndices {
+
+		/// <summary> The family for graphics operations. </summary>
 		std::optional<uint32_t> graphicsFamily;
+
+		/// <summary> The family for presentation operations. </summary>
 		std::optional<uint32_t> presentFamily;
+
+		/// <summary> The family for transfer operations. </summary>
 		std::optional<uint32_t> transferFamily;
 
+		/// <summary> Gets whether or not the queue families are available. </summary>
 		bool isComplete() {
 			return graphicsFamily.has_value() && presentFamily.has_value() && transferFamily.has_value();
 		}
 	};
 
+	/// <summary> A struct containing the support details of the swapchain. </summary>
 	struct SwapchainSupportDetails {
+
+		/// <summary> The capabilities of the swapchain. </summary>
 		VkSurfaceCapabilitiesKHR capabilities;
+
+		/// <summary>  The supported surface formats.  </summary>
 		std::vector<VkSurfaceFormatKHR> formats;
+
+		/// <summary> The supported presentation modes. </summary>
 		std::vector<VkPresentModeKHR> presentModes;
 	};
 
+	/// <summary>
+	/// A struct containing the vertex input binding description and attribute descriptions.
+	/// </summary>
 	struct Vertex {
 		glm::vec3 pos;
 		glm::vec3 color;
 		glm::vec2 texCoord;
 
+		/// <summary> Gets the binding description for the vertex. </summary>
 		static VkVertexInputBindingDescription getBindingDescription() {
 			VkVertexInputBindingDescription bindingDescription{};
 			bindingDescription.binding = 0;
@@ -44,6 +63,7 @@ namespace VWrap {
 			return bindingDescription;
 		}
 
+		/// <summary> Gets the attribute descriptions for the vertex. </summary>
 		static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions() {
 			std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
 
@@ -65,6 +85,7 @@ namespace VWrap {
 			return attributeDescriptions;
 		}
 
+		/// <summary> Gets whether or not the vertex is equal to another vertex. </summary>
 		bool operator==(const Vertex& other) const {
 			return pos == other.pos && color == other.color && texCoord == other.texCoord;
 		}
@@ -81,19 +102,15 @@ namespace VWrap {
 		if (!file.is_open()) {
 			throw std::runtime_error("failed to open file!");
 		}
-
 		size_t fileSize = (size_t)file.tellg();
 		std::vector<char> buffer(fileSize);
 
 		file.seekg(0);
 		file.read(buffer.data(), fileSize);
-
 		file.close();
 
 		return buffer;
 	}
-
-
 }
 
 namespace std {

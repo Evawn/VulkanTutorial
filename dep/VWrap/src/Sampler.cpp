@@ -2,10 +2,9 @@
 
 namespace VWrap {
 
-
 	std::shared_ptr<Sampler> Sampler::Create(std::shared_ptr<Device> device) {
 		auto ret = std::make_shared<Sampler>();
-		ret->m_device_ptr = device;
+		ret->m_device = device;
 
         VkSamplerCreateInfo info{};
         info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -16,7 +15,7 @@ namespace VWrap {
         info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 
         VkPhysicalDeviceProperties properties{};
-        vkGetPhysicalDeviceProperties(device->GetPhysicalDevice()->getHandle(), &properties);
+        vkGetPhysicalDeviceProperties(device->GetPhysicalDevice()->Get(), &properties);
         info.anisotropyEnable = VK_TRUE;
         info.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
 
@@ -38,6 +37,6 @@ namespace VWrap {
 
 	Sampler::~Sampler() {
 		if (m_sampler != VK_NULL_HANDLE)
-			vkDestroySampler(m_device_ptr->GetHandle(), m_sampler, nullptr);
+			vkDestroySampler(m_device->GetHandle(), m_sampler, nullptr);
 	}
 }

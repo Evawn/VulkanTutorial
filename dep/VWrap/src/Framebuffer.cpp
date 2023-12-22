@@ -10,7 +10,7 @@ namespace VWrap {
 
 		VkFramebufferCreateInfo createInfo{};
 		
-		createInfo.renderPass = render_pass->GetHandle();
+		createInfo.renderPass = render_pass->Get();
 		createInfo.height = extent.height;
 		createInfo.width = extent.width;
 		createInfo.layers = 1;
@@ -18,7 +18,7 @@ namespace VWrap {
 
 		std::vector<VkImageView> image_view_handles;
 		for (auto& image_view : attachments) {
-			image_view_handles.push_back(image_view->GetHandle());
+			image_view_handles.push_back(image_view->Get());
 		}
 		createInfo.attachmentCount = static_cast<uint32_t>(image_view_handles.size());
 		createInfo.pAttachments = image_view_handles.data();

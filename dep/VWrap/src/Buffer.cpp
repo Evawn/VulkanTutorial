@@ -2,14 +2,14 @@
 
 namespace VWrap {
 
-    std::shared_ptr<Buffer> Buffer::Create(std::shared_ptr<Allocator> allocator, std::shared_ptr<Device> device,
+    std::shared_ptr<Buffer> Buffer::Create(std::shared_ptr<Allocator> allocator,
         VkDeviceSize size,
         VkBufferUsageFlags usage,
         VkMemoryPropertyFlags properties,
         VmaAllocationCreateFlags flags) {
 
         auto ret = std::make_shared<Buffer>();
-        ret->m_device = device;
+
         ret->m_allocator = allocator;
 
         VkBufferCreateInfo bufferInfo{};
@@ -18,7 +18,7 @@ namespace VWrap {
         bufferInfo.size = size;
         bufferInfo.sharingMode = VK_SHARING_MODE_CONCURRENT;
 
-        QueueFamilyIndices indices = device->GetPhysicalDevice()->FindQueueFamilies();
+        QueueFamilyIndices indices = allocator->GetDevice()->GetPhysicalDevice()->FindQueueFamilies();
         bufferInfo.queueFamilyIndexCount = 2;
         uint32_t queueFamilyIndices[2] = { indices.graphicsFamily.value(), indices.transferFamily.value() };
         bufferInfo.pQueueFamilyIndices = queueFamilyIndices;
@@ -35,34 +35,23 @@ namespace VWrap {
         return ret;
     }
 
-    std::shared_ptr<Buffer> Buffer::Create(std::shared_ptr<Allocator> allocator, std::shared_ptr<Device> device,
-        VkDeviceSize size,
-        VkBufferUsageFlags usage,
-        VkMemoryPropertyFlags properties) {
-
-        return Create(allocator, device, size, usage, properties, 0);
-    }
-
     std::shared_ptr<Buffer> Buffer::CreateStaging(std::shared_ptr<Allocator> allocator,
-        std::shared_ptr<Device> device,
         VkDeviceSize size) {
         return Create(
             allocator, 
-            device, 
             size, 
             VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
             VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT);
     }
 
-    std::shared_ptr<Buffer> Buffer::CreateMapped(std::shared_ptr<Allocator> allocator, std::shared_ptr<Device> device,
+    std::shared_ptr<Buffer> Buffer::CreateMapped(std::shared_ptr<Allocator> allocator, 
         VkDeviceSize size,
         VkBufferUsageFlags usage,
         VkMemoryPropertyFlags properties,
         void*& data) {
 
         auto ret = std::make_shared<Buffer>();
-        ret->m_device = device;
         ret->m_allocator = allocator;
 
         VkBufferCreateInfo bufferInfo{};
@@ -71,7 +60,7 @@ namespace VWrap {
         bufferInfo.size = size;
         bufferInfo.sharingMode = VK_SHARING_MODE_CONCURRENT;
 
-        QueueFamilyIndices indices = device->GetPhysicalDevice()->FindQueueFamilies();
+        QueueFamilyIndices indices = allocator->GetDevice()->GetPhysicalDevice()->FindQueueFamilies();
         bufferInfo.queueFamilyIndexCount = 2;
         uint32_t queueFamilyIndices[2] = { indices.graphicsFamily.value(), indices.transferFamily.value() };
         bufferInfo.pQueueFamilyIndices = queueFamilyIndices;

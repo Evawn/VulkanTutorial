@@ -21,42 +21,36 @@ namespace VWrap {
 		/// </summary>
 		VkBuffer m_buffer;
 
+		/// <summary>
+		/// The allocation handle.
+		/// </summary>
 		VmaAllocation m_allocation;
 
 		/// <summary>
-		/// The device that created this buffer.
+		/// The allocator that created this buffer.
 		/// </summary>
-		std::shared_ptr<Device> m_device;
-
 		std::shared_ptr<Allocator> m_allocator;
 
 	public:
 
-		static std::shared_ptr<Buffer> Create(std::shared_ptr<Allocator> allocator, std::shared_ptr<Device> device,
+		/// <summary>
+		/// Creates a buffer with the given parameters, including VMA Allocation Flags
+		/// </summary>
+		static std::shared_ptr<Buffer> Create(std::shared_ptr<Allocator> allocator,
 			VkDeviceSize size,
 			VkBufferUsageFlags usage,
 			VkMemoryPropertyFlags properties,
 			VmaAllocationCreateFlags flags);
 
 		/// <summary>
-		/// Creates a buffer with the given parameters.
-		/// </summary>
-		static std::shared_ptr<Buffer> Create(std::shared_ptr<Allocator> allocator, std::shared_ptr<Device> device,
-			VkDeviceSize size,
-			VkBufferUsageFlags usage,
-			VkMemoryPropertyFlags properties);
-
-		/// <summary>
 		/// Creates a buffer with parameters suited for staging
 		/// </summary>
-		static std::shared_ptr<Buffer> CreateStaging(std::shared_ptr<Allocator> allocator,
-			std::shared_ptr<Device> device,
-			VkDeviceSize size);
+		static std::shared_ptr<Buffer> CreateStaging(std::shared_ptr<Allocator> allocator, VkDeviceSize size);
 
 		/// <summary>
 		/// Creates a buffer with parameters suited for persistent mapped memory
 		/// </summary>
-		static std::shared_ptr<Buffer> CreateMapped(std::shared_ptr<Allocator> allocator, std::shared_ptr<Device> device,
+		static std::shared_ptr<Buffer> CreateMapped(std::shared_ptr<Allocator> allocator,
 			VkDeviceSize size,
 			VkBufferUsageFlags usage,
 			VkMemoryPropertyFlags properties,

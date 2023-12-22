@@ -7,45 +7,56 @@
 
 namespace VWrap {
 
+	/// <summary>
+	/// Represents a Vulkan surface.
+	/// </summary>
 	class Surface {
 
 	private:
 
+		/// <summary> The surface handle. </summary>
 		VkSurfaceKHR m_surface{ VK_NULL_HANDLE };
-		std::shared_ptr<Instance> m_instance_ptr; 
-		std::shared_ptr<GLFWwindow*> m_window_ptr;
+
+		/// <summary> The Instance associated with this surface. </summary>
+		std::shared_ptr<Instance> m_instance;
+
+		/// <summary> The GLFW window associated with this surface. </summary>
+		std::shared_ptr<GLFWwindow*> m_window;
 
 	public:
 
+		/// <summary>
+		/// Creates a new surface attached to the given window.
+		/// </summary>
 		static std::shared_ptr<Surface> Create(std::shared_ptr<Instance> instance, std::shared_ptr<GLFWwindow*> window) {
 			auto ret = std::make_shared<Surface>();
-			ret->m_instance_ptr = instance;
-			ret->m_window_ptr = window;
+			ret->m_instance = instance;
+			ret->m_window = window;
 
-			if (glfwCreateWindowSurface(instance->getHandle(), *window, nullptr, &ret->m_surface) != VK_SUCCESS) {
+			if (glfwCreateWindowSurface(instance->Get(), *window, nullptr, &ret->m_surface) != VK_SUCCESS) {
 				throw std::runtime_error("Failed to create window surface!");
 			}
 			return ret;
 		}
 
-		~Surface() {
-			if (m_surface != VK_NULL_HANDLE) {
-				vkDestroySurfaceKHR(m_instance_ptr->getHandle(), m_surface, nullptr);
-			}
-		}
-
-		VkSurfaceKHR getHandle() const {
+		/// <summary>
+		/// Returns the surface handle.
+		/// </summary>
+		VkSurfaceKHR Get() const {
 			return m_surface;
 		}
 
-		std::shared_ptr<Instance> getInstancePtr() const {
-			return m_instance_ptr;
-		}
-		
-		std::shared_ptr<GLFWwindow*> getWindowPtr() const {
-			return m_window_ptr;
+		/// <summary>
+		/// Gets the GLFW Window associated with this surface.
+		/// </summary>
+		std::shared_ptr<GLFWwindow*> GetWindow() const {
+			return m_window;
 		}
 
+		~Surface() {
+			if (m_surface != VK_NULL_HANDLE) {
+				vkDestroySurfaceKHR(m_instance->Get(), m_surface, nullptr);
+			}
+		}
 	};
-
 }

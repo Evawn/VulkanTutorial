@@ -2,10 +2,9 @@
 
 namespace VWrap {
 
-
 	std::shared_ptr<Semaphore> Semaphore::Create(std::shared_ptr<Device> device) {
 		auto ret = std::make_shared<Semaphore>();
-		ret->m_device_ptr = device;
+		ret->m_device = device;
 
 		VkSemaphoreCreateInfo semaphoreInfo{};
 		semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -19,6 +18,6 @@ namespace VWrap {
 
 	Semaphore::~Semaphore() {
 		if (m_semaphore != VK_NULL_HANDLE)
-			vkDestroySemaphore(m_device_ptr->GetHandle(), m_semaphore, nullptr);
+			vkDestroySemaphore(m_device->GetHandle(), m_semaphore, nullptr);
 	}
 }

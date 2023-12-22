@@ -3,14 +3,14 @@
 namespace VWrap {
 
     std::shared_ptr<ImageView> ImageView::Create(std::shared_ptr<Device> device, std::shared_ptr<Image> image, VkImageAspectFlags aspect) {
-        auto ret = Create(device, image->GetHandle(), image->GetFormat(), aspect, image->GetMipLevels());
-        ret->m_image_ptr = image;
+        auto ret = Create(device, image->Get(), image->GetFormat(), aspect, image->GetMipLevels());
+        ret->m_image = image;
         return ret; 
     }
 
     std::shared_ptr<ImageView> ImageView::Create(std::shared_ptr<Device> device, VkImage image, VkFormat format, VkImageAspectFlags aspect, uint32_t mip_levels) {
         auto ret = std::make_shared<ImageView>();
-        ret->m_device_ptr = device;
+        ret->m_device = device;
 
         VkImageViewCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -31,6 +31,6 @@ namespace VWrap {
 
     ImageView::~ImageView() {
         if (m_image_view != VK_NULL_HANDLE)
-		    vkDestroyImageView(m_device_ptr->GetHandle(), m_image_view, nullptr);
+		    vkDestroyImageView(m_device->GetHandle(), m_image_view, nullptr);
 	}
 }

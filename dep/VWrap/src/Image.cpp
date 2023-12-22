@@ -1,11 +1,9 @@
 #include "Image.h"
 
-
 namespace VWrap {
 
-	std::shared_ptr<Image> Image::Create(std::shared_ptr<Allocator> allocator, std::shared_ptr<Device> device, std::shared_ptr<CommandPool> graphics_pool, ImageCreateInfo& info) {
+	std::shared_ptr<Image> Image::Create(std::shared_ptr<Allocator> allocator,  std::shared_ptr<CommandPool> graphics_pool, ImageCreateInfo& info) {
 		auto ret = std::make_shared<Image>();
-		ret->m_device = device;
 		ret->m_allocator = allocator;
 		ret->m_command_pool = graphics_pool;
 		ret->m_format = info.format;
@@ -41,7 +39,7 @@ namespace VWrap {
 		return ret;
 	}
 
-	std::shared_ptr<Image> Image::Texture2DFromFile(std::shared_ptr<Allocator> allocator, std::shared_ptr<Device> device, std::shared_ptr<CommandPool> graphics_pool, const char* file_name) {
+	std::shared_ptr<Image> Image::Texture2DFromFile(std::shared_ptr<Allocator> allocator,std::shared_ptr<CommandPool> graphics_pool, const char* file_name) {
 		int texWidth, texHeight, texChannels;
 		stbi_uc* pixels = stbi_load(file_name, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 		VkDeviceSize imageSize = texWidth * texHeight * 4;
@@ -50,7 +48,7 @@ namespace VWrap {
 			throw std::runtime_error("Failed to load images!");
 		}
 
-		auto staging_buffer = Buffer::CreateStaging(allocator, device, imageSize);
+		auto staging_buffer = Buffer::CreateStaging(allocator, imageSize);
 
 		void* data;
 		vmaMapMemory(allocator->Get(), staging_buffer->GetAllocation(), &data);
@@ -67,7 +65,7 @@ namespace VWrap {
 		info.properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 		info.mip_levels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
 
-		auto ret = Image::Create(allocator, device, graphics_pool, info);
+		auto ret = Image::Create(allocator, graphics_pool, info);
 
 		ret->TransitionLayout(VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 		ret->CopyFromBuffer(staging_buffer->GetHandle(), texWidth, texHeight);
@@ -80,7 +78,7 @@ namespace VWrap {
 	{
 		for (VkFormat format : candidates) {
 			VkFormatProperties props;
-			vkGetPhysicalDeviceFormatProperties(device->GetPhysicalDevice()->getHandle(), format, &props);
+			vkGetPhysicalDeviceFormatProperties(device->GetPhysicalDevice()->Get(), format, &props);
 
 			if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
 				return format;
@@ -195,7 +193,7 @@ namespace VWrap {
 	void Image::GenerateMipmaps() {
 		// Check if image format supports linear blitting
 		VkFormatProperties formatProperties;
-		vkGetPhysicalDeviceFormatProperties(m_device->GetPhysicalDevice()->getHandle(), m_format, &formatProperties);
+		vkGetPhysicalDeviceFormatProperties(m_allocator->GetDevice()->GetPhysicalDevice()->Get(), m_format, &formatProperties);
 		if (!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)) {
 			throw std::runtime_error("texture image format does not support linear blitting!");
 		}
@@ -282,7 +280,6 @@ namespace VWrap {
 
 		CommandBuffer::EndSingleTimeCommands(command_buffer);
 	}
-
 
 	Image::~Image() {
 		if (m_image != VK_NULL_HANDLE && m_allocation != nullptr)

@@ -4,7 +4,7 @@ namespace VWrap {
 
 	std::shared_ptr<RenderPass> RenderPass::Create(std::shared_ptr<Device> device, VkFormat format, VkSampleCountFlagBits samples) {
 		auto ret = std::make_shared<RenderPass>();
-		ret->m_device_ptr = device;
+		ret->m_device = device;
         ret->m_samples = samples;
 
         VkAttachmentDescription colorAttachment{};
@@ -84,7 +84,6 @@ namespace VWrap {
 
     RenderPass::~RenderPass() {
         if (m_render_pass != VK_NULL_HANDLE)
-		    vkDestroyRenderPass(m_device_ptr->GetHandle(), m_render_pass, nullptr);
+		    vkDestroyRenderPass(m_device->GetHandle(), m_render_pass, nullptr);
 	}
-
 }

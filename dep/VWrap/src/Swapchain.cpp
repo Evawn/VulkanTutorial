@@ -4,12 +4,12 @@ namespace VWrap {
 
 	std::shared_ptr<Swapchain> Swapchain::Create(std::shared_ptr<Device> device, std::shared_ptr<Surface> surface) {
 		auto ret = std::make_shared<Swapchain>();
-		ret->m_device_ptr = device;
+		ret->m_device = device;
 
         // Query the support, and choose optimal parameters
         SwapchainSupportDetails details = device->GetPhysicalDevice()->QuerySwapchainSupport();
 
-        VkExtent2D extent = chooseSwapExtent(details.capabilities, *surface->getWindowPtr());
+        VkExtent2D extent = chooseSwapExtent(details.capabilities, *surface->GetWindow());
         VkPresentModeKHR mode = chooseSwapPresentMode(details.presentModes);
         VkSurfaceFormatKHR format = chooseSwapSurfaceFormat(details.formats);
 
@@ -29,7 +29,7 @@ namespace VWrap {
         createInfo.minImageCount = imageCount;
         createInfo.imageArrayLayers = 1; // 1 unless stereoscopic
         createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT; // images used directly for rendering
-        createInfo.surface = surface->getHandle();
+        createInfo.surface = surface->Get();
 
         // Get the queue families, and determine whether concurrent image sharing is necessary
         QueueFamilyIndices indices = device->GetPhysicalDevice()->FindQueueFamilies();
@@ -58,22 +58,16 @@ namespace VWrap {
 
         // Retrieve handles to the swapchain images
         vkGetSwapchainImagesKHR(device->GetHandle(), ret->m_swapchain, &imageCount, nullptr);
-        ret->m_swapchain_images.resize(imageCount);
-        vkGetSwapchainImagesKHR(device->GetHandle(), ret->m_swapchain, &imageCount, ret->m_swapchain_images.data());
+        ret->m_images.resize(imageCount);
+        vkGetSwapchainImagesKHR(device->GetHandle(), ret->m_swapchain, &imageCount, ret->m_images.data());
 
-        ret->m_swapchain_image_format = format.format;
-        ret->m_swapchain_extent = extent;
+        ret->m_format = format.format;
+        ret->m_extent = extent;
 
         return ret;
 	}
 
-    /// <summary>
-/// Returns the optimal surface format from a list of formats.
-/// (VK_FORMAT_B8G8R8A8_SRGB) and (VK_COLOR_SPACE_SRGB_NONLINEAR_KHR), otherwise just the first of the list.
-/// COULD rank each format and choose highest.
-/// </summary>
-/// <param name="formats"> The list to choose from. </param>
-/// <returns> The optimal surface format from the list. </returns>
+
     VkSurfaceFormatKHR Swapchain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> formats) {
         for (const auto& format : formats) {
             if (format.format == VK_FORMAT_R8G8B8A8_SRGB && format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
@@ -83,12 +77,6 @@ namespace VWrap {
         return formats[0];
     }
 
-    /// <summary>
-    /// Returns the optimal present mode from a list of modes.
-    /// (Chooses mailbox, otherwise returns FIFO, which is guarenteed to be supported.)
-    /// </summary>
-    /// <param name="modes"> The list of modes to choose from. </param>
-    /// <returns> The optimal present mode in 'modes'. </returns>
     VkPresentModeKHR Swapchain::chooseSwapPresentMode(const std::vector<VkPresentModeKHR> modes) {
         for (const auto& mode : modes) {
             if (mode == VK_PRESENT_MODE_MAILBOX_KHR) {
@@ -98,11 +86,6 @@ namespace VWrap {
         return VK_PRESENT_MODE_FIFO_KHR;
     }
 
-    /// <summary>
-    /// Returns the optimal Extent given the capabilities.
-    /// </summary>
-    /// <param name="capabilities"> The capabilities which to base the optimal extent. </param>
-    /// <returns> The optimal extent given capabilities. </returns>
     VkExtent2D Swapchain::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, GLFWwindow* window) {
 
         // We should just use the current extent, unless it takes a special value
@@ -131,7 +114,7 @@ namespace VWrap {
     Swapchain::~Swapchain() {
         std::cout << "Destroying Swapchain" << std::endl;
         if(m_swapchain != VK_NULL_HANDLE)
-		    vkDestroySwapchainKHR(m_device_ptr->GetHandle(), m_swapchain, nullptr);
+		    vkDestroySwapchainKHR(m_device->GetHandle(), m_swapchain, nullptr);
 	}
 
 }

@@ -6,19 +6,18 @@ namespace VWrap
 	std::shared_ptr<PhysicalDevice> PhysicalDevice::Pick(std::shared_ptr<Instance> instance, std::shared_ptr<Surface> surface)
     {
         auto ret = std::make_shared<PhysicalDevice>();
-        ret->m_instance_ptr = instance;
-        ret->m_surface_ptr = surface;
+        ret->m_surface = surface;
 
         // Query physical device count
         uint32_t pdCount = 0;
-        vkEnumeratePhysicalDevices(instance->getHandle(), &pdCount, nullptr);
+        vkEnumeratePhysicalDevices(instance->Get(), &pdCount, nullptr);
         if (pdCount == 0) {
             throw std::runtime_error("No physical devices!");
         }
 
         // Query physical devices
         std::vector<VkPhysicalDevice> devices(pdCount);
-        vkEnumeratePhysicalDevices(instance->getHandle(), &pdCount, devices.data());
+        vkEnumeratePhysicalDevices(instance->Get(), &pdCount, devices.data());
 
         for (const auto& device : devices)
         {
@@ -33,11 +32,6 @@ namespace VWrap
         return ret;
     }
 
-    /// <summary>
-/// Queries required device features and decides if suitable.
-/// </summary>
-/// <param name="device"></param>
-/// <returns> Whether the device is suitable.</returns>
     bool PhysicalDevice::isPhysicalDeviceSuitable()
     {
         QueueFamilyIndices indices = FindQueueFamilies();
@@ -55,11 +49,6 @@ namespace VWrap
         return indices.isComplete() && extensionsSupported && swapchainSupported && supportedFeatures.samplerAnisotropy;
     }
 
-    /// <summary>
-/// Queries 'device' for support for extensions defines in DEVICE_EXTENSIONS.
-/// </summary>
-/// <param name="device"> The physical device to query the extension support of.</param>
-/// <returns>Whether or not 'device' supports all extensions found in DEVICE_EXTENSIONS</returns>
     bool PhysicalDevice::checkDeviceExtensions() {
 
         // First get the number of available extensions, create a vec, then get the extensions
@@ -77,38 +66,28 @@ namespace VWrap
         return uniqueRequiredExtensions.empty();
     }
 
-    /// <summary>
-    /// Queries 'device' for supported swapchain functionality and returns its support.
-    /// </summary>
-    /// <param name="device"> The device whose swapchain support is to be queried. </param>
-    /// <returns> A struct containing details about the swapchain support of 'device'.</returns>
     SwapchainSupportDetails PhysicalDevice::QuerySwapchainSupport() {
         SwapchainSupportDetails details;
 
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physical_device, m_surface_ptr->getHandle(), &details.capabilities);
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physical_device, m_surface->Get(), &details.capabilities);
 
         uint32_t formatCount;
-        vkGetPhysicalDeviceSurfaceFormatsKHR(m_physical_device, m_surface_ptr->getHandle(), &formatCount, nullptr);
+        vkGetPhysicalDeviceSurfaceFormatsKHR(m_physical_device, m_surface->Get(), &formatCount, nullptr);
         if (formatCount != 0) {
             details.formats.resize(formatCount);
-            vkGetPhysicalDeviceSurfaceFormatsKHR(m_physical_device, m_surface_ptr->getHandle(), &formatCount, details.formats.data());
+            vkGetPhysicalDeviceSurfaceFormatsKHR(m_physical_device, m_surface->Get(), &formatCount, details.formats.data());
         }
 
         uint32_t presentModeCount;
-        vkGetPhysicalDeviceSurfacePresentModesKHR(m_physical_device, m_surface_ptr->getHandle(), &presentModeCount, nullptr);
+        vkGetPhysicalDeviceSurfacePresentModesKHR(m_physical_device, m_surface->Get(), &presentModeCount, nullptr);
         if (presentModeCount != 0) {
             details.presentModes.resize(presentModeCount);
-            vkGetPhysicalDeviceSurfacePresentModesKHR(m_physical_device, m_surface_ptr->getHandle(), &presentModeCount, details.presentModes.data());
+            vkGetPhysicalDeviceSurfacePresentModesKHR(m_physical_device, m_surface->Get(), &presentModeCount, details.presentModes.data());
         }
 
         return details;
     }
 
-    /// <summary>
-/// Queries physical device for the indices of required queue families.
-/// </summary>
-/// <param name="device">The physical device to be queried</param>
-/// <returns>A struct containing indices for all required queue families.</returns>
     QueueFamilyIndices PhysicalDevice::FindQueueFamilies() {
         QueueFamilyIndices indices;
         uint32_t queueFamilyCount = 0;
@@ -127,7 +106,7 @@ namespace VWrap
             }
 
             VkBool32 presentSupport = false;
-            vkGetPhysicalDeviceSurfaceSupportKHR(this->m_physical_device, i, this->m_surface_ptr->getHandle(), &presentSupport);
+            vkGetPhysicalDeviceSurfaceSupportKHR(this->m_physical_device, i, this->m_surface->Get(), &presentSupport);
             if (presentSupport) {
                 indices.presentFamily = i;
             }
