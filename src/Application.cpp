@@ -56,6 +56,33 @@ void Application::InitVulkan() {
 		m_graphics_command_pool,
 		m_frame_controller->GetSwapchain()->GetExtent(),
 		MAX_FRAMES_IN_FLIGHT);
+
+	// Setup Dear ImGui context
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+	ImGui::StyleColorsDark();
+
+	ImGui_ImplGlfw_InitForVulkan(m_glfw_window.get()[0], true);
+
+	ImGui_ImplVulkan_InitInfo init_info{};
+	init_info.Instance = m_instance->Get();
+	init_info.PhysicalDevice = m_physical_device->Get();
+	init_info.Device = m_device->GetHandle();
+	init_info.QueueFamily = indices.graphicsFamily.value();
+	init_info.Queue = m_graphics_queue->Get();
+	init_info.PipelineCache = VK_NULL_HANDLE; // TODO : Create pipeline cache ??????
+	init_info.DescriptorPool = VK_NULL_HANDLE; // TODO : Create descriptor pool
+	init_info.Subpass = 0; // TODO: Create subpass for it
+	init_info.MinImageCount = m_frame_controller->GetSwapchain()->Size();
+	init_info.ImageCount = m_frame_controller->GetSwapchain()->Size();
+	init_info.MSAASamples = sample_count;
+	init_info.Allocator = VK_NULL_HANDLE;
+	init_info.CheckVkResultFn = check_vk_result;
+	//ImGui_ImplVulkan_Init(&init_info, m_render_pass->Get());
 }
 
 void Application::MainLoop() {

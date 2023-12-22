@@ -4,6 +4,10 @@
 #include <GLFW/glfw3.h>
 #include "tiny_obj_loader.h"
 
+#include "imgui.h"
+#include "backends/imgui_impl_glfw.h"
+#include "backends/imgui_impl_vulkan.h"
+
 // VWRAP INCLUDES ---------------------------------------------------------------------------------------------
 #include "Instance.h"
 #include "Surface.h"
@@ -65,6 +69,15 @@ const bool ENABLE_VALIDATION_LAYERS = false;
 #else
 const bool ENABLE_VALIDATION_LAYERS = true;
 #endif
+
+static void check_vk_result(VkResult err)
+{
+	if (err == 0)
+		return;
+	fprintf(stderr, "[vulkan] Error: VkResult = %d\n", err);
+	if (err < 0)
+		abort();
+}
 
 /// <summary>
 /// This class is the main application class. It contains all the vulkan objects

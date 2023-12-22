@@ -11,13 +11,15 @@ project "VulkanTutorial"
    location "Solution"
 
    files { "src/*", "dep/VWrap/src/*.cpp", 
-                    "dep/VWrap/include/*.h" }
+                    "dep/VWrap/include/*.h",
+                  "dep/imgui/**.cpp"}
 
    includedirs {"dep", 
     "dep/VWrap/include",
     "dep/glm",
     "dep/glfw-3.3.8.bin.WIN64/include",
-    "dep/Vulkan/Include"
+    "dep/Vulkan/Include",
+    "dep/imgui",
     }
 
     -- TODO: change to not just support vc2022
