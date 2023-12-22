@@ -17,7 +17,6 @@ namespace VWrap {
 		}
 
 		return ret;
-	
 	}
 
 	std::shared_ptr<CommandBuffer> CommandBuffer::BeginSingleTimeCommands(std::shared_ptr<CommandPool> command_pool) {

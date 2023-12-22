@@ -3,15 +3,16 @@
 inline void MeshRasterizer::CreateVertexBuffer() {
 	VkDeviceSize bufferSize = sizeof(m_vertices[0]) * m_vertices.size();
 
-	auto staging_buffer = VWrap::Buffer::CreateStaging(m_device,
+	auto staging_buffer = VWrap::Buffer::CreateStaging(m_allocator, m_device,
 		bufferSize);
 
 	void* data;
-	vkMapMemory(m_device->GetHandle(), staging_buffer->GetMemory(), 0, bufferSize, 0, &data);
+	vmaMapMemory(m_allocator->Get(), staging_buffer->GetAllocation(), &data);
 	memcpy(data, m_vertices.data(), (size_t)bufferSize);
-	vkUnmapMemory(m_device->GetHandle(), staging_buffer->GetMemory());
+	vmaUnmapMemory(m_allocator->Get(), staging_buffer->GetAllocation());
 
-	m_vertex_buffer = VWrap::Buffer::Create(m_device,
+	m_vertex_buffer = VWrap::Buffer::Create(m_allocator,
+		m_device,
 		bufferSize,
 		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -22,14 +23,16 @@ inline void MeshRasterizer::CreateVertexBuffer() {
 inline void MeshRasterizer::CreateIndexBuffer() {
 	VkDeviceSize bufferSize = sizeof(m_indices[0]) * m_indices.size();
 
-	auto staging_buffer = VWrap::Buffer::CreateStaging(m_device, bufferSize);
+	auto staging_buffer = VWrap::Buffer::CreateStaging(m_allocator, m_device,
+		bufferSize);
 
 	void* data;
-	vkMapMemory(m_device->GetHandle(), staging_buffer->GetMemory(), 0, bufferSize, 0, &data);
+	vmaMapMemory(m_allocator->Get(), staging_buffer->GetAllocation(), &data);
 	memcpy(data, m_indices.data(), (size_t)bufferSize);
-	vkUnmapMemory(m_device->GetHandle(), staging_buffer->GetMemory());
+	vmaUnmapMemory(m_allocator->Get(), staging_buffer->GetAllocation());
 
-	m_index_buffer = VWrap::Buffer::Create(m_device,
+	m_index_buffer = VWrap::Buffer::Create(m_allocator,
+		m_device,
 		bufferSize,
 		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -44,11 +47,14 @@ inline void MeshRasterizer::CreateUniformBuffers() {
 	m_uniform_buffers_mapped.resize(frames);
 
 	for (size_t i = 0; i < frames; i++) {
-		m_uniform_buffers[i] = VWrap::Buffer::Create(m_device,
+		//VmaAllocationInfo alloc_info{};
+		m_uniform_buffers[i] = VWrap::Buffer::CreateMapped(
+			m_allocator,
+			m_device,
 			bufferSize,
 			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-		vkMapMemory(m_device->GetHandle(), m_uniform_buffers[i]->GetMemory(), 0, bufferSize, 0, &m_uniform_buffers_mapped[i]);
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			m_uniform_buffers_mapped[i]);
 	}
 }
 
@@ -126,9 +132,10 @@ inline void MeshRasterizer::LoadModel() {
 	std::cout << "Finished loading" << std::endl;
 }
 
-std::shared_ptr<MeshRasterizer> MeshRasterizer::Create(std::shared_ptr<VWrap::Device> device, std::shared_ptr<VWrap::RenderPass> render_pass, std::shared_ptr<VWrap::CommandPool> graphics_pool, VkExtent2D extent, uint32_t num_frames) {
+std::shared_ptr<MeshRasterizer> MeshRasterizer::Create(std::shared_ptr<VWrap::Allocator> allocator, std::shared_ptr<VWrap::Device> device, std::shared_ptr<VWrap::RenderPass> render_pass, std::shared_ptr<VWrap::CommandPool> graphics_pool, VkExtent2D extent, uint32_t num_frames) {
 	auto ret = std::make_shared<MeshRasterizer>();
 	ret->m_device = device;
+	ret->m_allocator = allocator;
 	ret->m_extent = extent;
 	ret->m_graphics_pool = graphics_pool;
 
@@ -136,7 +143,7 @@ std::shared_ptr<MeshRasterizer> MeshRasterizer::Create(std::shared_ptr<VWrap::De
 	ret->m_pipeline = VWrap::Pipeline::Create(device, render_pass, ret->m_descriptor_set_layout, extent);
 	ret->m_sampler = VWrap::Sampler::Create(device);
 
-	ret->m_texture_image = VWrap::Image::Texture2DFromFile(device, graphics_pool, TEXTURE_PATH.data());
+	ret->m_texture_image = VWrap::Image::Texture2DFromFile(allocator, device, graphics_pool, TEXTURE_PATH.data());
 	ret->m_texture_image_view = VWrap::ImageView::Create(device, ret->m_texture_image);
 
 

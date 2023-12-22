@@ -4,8 +4,10 @@
 #include <memory>
 #include <string>
 #include "stb_image.h"
+#include "vk_mem_alloc.h"
 #include "CommandBuffer.h"
 #include "Buffer.h"
+#include "Allocator.h"
 
 namespace VWrap {
 
@@ -24,25 +26,23 @@ namespace VWrap {
 	private:
 
 		VkImage m_image;
-		VkDeviceMemory m_image_memory;
+		VmaAllocation m_allocation;
 		VkFormat m_format;
 		uint32_t m_mip_levels;
 		uint32_t m_width, m_height;
 
-		std::shared_ptr<Device> m_device_ptr;
-		std::shared_ptr<CommandPool> m_graphics_pool_ptr;
+		std::shared_ptr<Device> m_device;
+		std::shared_ptr<Allocator> m_allocator;
+		std::shared_ptr<CommandPool> m_command_pool;
 
 		static VkFormat FindSupportedFormat(std::shared_ptr<Device> device, const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 
 		static bool HasStencilComponent(VkFormat format);
 
 	public:
+		static std::shared_ptr<Image> Create(std::shared_ptr<Allocator> allocator, std::shared_ptr<Device> device, std::shared_ptr<CommandPool> graphics_pool, ImageCreateInfo& info);
 
-		static std::shared_ptr<Image> Create(std::shared_ptr<Device> device, std::shared_ptr<CommandPool> graphics_pool, ImageCreateInfo& info);
-
-		static std::shared_ptr<Image> Texture2DFromFile(std::shared_ptr<Device> device, std::shared_ptr<CommandPool> graphics_pool, const char* file_name);
-
-		//static std::shared_ptr<Image> CreateDepthImage(std::shared_ptr<Device> device, std::shared_ptr<CommandPool> graphics_pool, VkExtent2D extent);
+		static std::shared_ptr<Image> Texture2DFromFile(std::shared_ptr<Allocator> allocator, std::shared_ptr<Device> device, std::shared_ptr<CommandPool> graphics_pool, const char* file_name);
 
 		static VkFormat FindDepthFormat(std::shared_ptr<Device> device);
 
@@ -53,8 +53,6 @@ namespace VWrap {
 		void GenerateMipmaps();
 
 		VkImage GetHandle() const { return m_image; }
-
-		VkDeviceMemory GetMemoryHandle() const { return m_image_memory; }
 
 		VkFormat GetFormat() const { return m_format; }
 

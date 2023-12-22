@@ -13,6 +13,7 @@
 #include "Image.h"
 #include "ImageView.h"
 #include "Sampler.h"
+#include "Allocator.h"
 
 #include "tiny_obj_loader.h"
 #include <unordered_map>
@@ -63,6 +64,7 @@ private:
 	// DEVICE RESOURCES
 	std::shared_ptr<VWrap::Device> m_device;
 	std::shared_ptr<VWrap::CommandPool> m_graphics_pool;
+	std::shared_ptr<VWrap::Allocator> m_allocator;
 
 	// TEXTURES
 	std::shared_ptr<VWrap::ImageView> m_texture_image_view;
@@ -122,7 +124,7 @@ public:
 	/// <param name="extent"> The extent of the pipeline. </param>
 	/// <param name="num_frames"> The max number of frames. Defines number of descriptor sets. </param>
 	/// <returns> A pointer to a new MeshRasterizer </returns>
-	static std::shared_ptr<MeshRasterizer> Create(std::shared_ptr<VWrap::Device> device, std::shared_ptr<VWrap::RenderPass> render_pass, std::shared_ptr<VWrap::CommandPool> graphics_pool, VkExtent2D extent, uint32_t num_frames);
+	static std::shared_ptr<MeshRasterizer> Create(std::shared_ptr<VWrap::Allocator> allocator, std::shared_ptr<VWrap::Device> device, std::shared_ptr<VWrap::RenderPass> render_pass, std::shared_ptr<VWrap::CommandPool> graphics_pool, VkExtent2D extent, uint32_t num_frames);
 
 	/// <summary>
 	/// Records commands to the command_buffer to draw the model using rasterization.

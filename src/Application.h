@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 #include "tiny_obj_loader.h"
 
+// VWRAP INCLUDES ---------------------------------------------------------------------------------------------
 #include "Instance.h"
 #include "Surface.h"
 #include "PhysicalDevice.h"
@@ -25,9 +26,12 @@
 #include "DescriptorSet.h"
 #include "Queue.h"
 #include "FrameController.h"
+#include "Allocator.h"
 
+// PROJECT INCLUDES ---------------------------------------------------------------------------------------------
 #include "MeshRasterizer.h"
 
+// STD INCLUDES ----------------------------------------------------------------------------------------------
 #include <iostream>
 #include <stdexcept>
 #include <cstdlib>
@@ -75,6 +79,8 @@ private:
 	std::shared_ptr<VWrap::Instance> m_instance;
 	std::shared_ptr<VWrap::PhysicalDevice> m_physical_device;
 	std::shared_ptr<VWrap::Device> m_device;
+	std::shared_ptr<VWrap::Allocator> m_allocator;
+
 
 	// WINDOW PRESENTATION
 	std::shared_ptr<GLFWwindow*> m_glfw_window;

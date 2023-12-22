@@ -28,6 +28,7 @@ void Application::InitVulkan() {
 	m_surface = VWrap::Surface::Create(m_instance, m_glfw_window);
 	m_physical_device = VWrap::PhysicalDevice::Pick(m_instance, m_surface);
 	m_device = VWrap::Device::Create(m_physical_device, ENABLE_VALIDATION_LAYERS);
+	m_allocator = VWrap::Allocator::Create(m_instance, m_physical_device, m_device);
 
 	VWrap::QueueFamilyIndices indices = m_physical_device->FindQueueFamilies();
 
@@ -49,6 +50,7 @@ void Application::InitVulkan() {
 	CreateFramebuffers();
 
 	m_mesh_rasterizer = MeshRasterizer::Create(
+		m_allocator,
 		m_device, 
 		m_render_pass,
 		m_graphics_command_pool,
@@ -153,7 +155,7 @@ void Application::CreateDepthResources(VkSampleCountFlagBits samples)
 	info.mip_levels = 1;
 	info.samples = samples;
 
-	auto im = VWrap::Image::Create(m_device, m_graphics_command_pool, info);
+	auto im = VWrap::Image::Create(m_allocator, m_device, m_graphics_command_pool, info);
 	m_depth_image_view = VWrap::ImageView::Create(m_device, im, VK_IMAGE_ASPECT_DEPTH_BIT);
 }
 
@@ -169,6 +171,6 @@ void Application::CreateColorResources(VkSampleCountFlagBits samples)
 	info.tiling = VK_IMAGE_TILING_OPTIMAL;
 	info.samples = samples;
 
-	auto im = VWrap::Image::Create(m_device, m_graphics_command_pool, info);
+	auto im = VWrap::Image::Create(m_allocator, m_device, m_graphics_command_pool, info);
 	m_color_image_view = VWrap::ImageView::Create(m_device, im, VK_IMAGE_ASPECT_COLOR_BIT);
 }

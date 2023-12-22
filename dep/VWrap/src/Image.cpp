@@ -3,10 +3,11 @@
 
 namespace VWrap {
 
-	std::shared_ptr<Image> Image::Create(std::shared_ptr<Device> device, std::shared_ptr<CommandPool> graphics_pool, ImageCreateInfo& info) {
+	std::shared_ptr<Image> Image::Create(std::shared_ptr<Allocator> allocator, std::shared_ptr<Device> device, std::shared_ptr<CommandPool> graphics_pool, ImageCreateInfo& info) {
 		auto ret = std::make_shared<Image>();
-		ret->m_device_ptr = device;
-		ret->m_graphics_pool_ptr = graphics_pool;
+		ret->m_device = device;
+		ret->m_allocator = allocator;
+		ret->m_command_pool = graphics_pool;
 		ret->m_format = info.format;
 		ret->m_mip_levels = info.mip_levels == 0 ? 1 : info.mip_levels;
 		ret->m_width = info.width;
@@ -30,27 +31,17 @@ namespace VWrap {
 		imageInfo.samples = samples;
 		imageInfo.flags = 0; // Optional
 
-		if (vkCreateImage(device->GetHandle(), &imageInfo, nullptr, &ret->m_image) != VK_SUCCESS) {
+		VmaAllocationCreateInfo allocCreateInfo{};
+		allocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO;
+
+		if (vmaCreateImage(allocator->Get(), &imageInfo, &allocCreateInfo, &ret->m_image, &ret->m_allocation, nullptr) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to create image!");
 		}
-
-		VkMemoryRequirements imageMemReq;
-		vkGetImageMemoryRequirements(device->GetHandle(), ret->m_image, &imageMemReq);
-
-		VkMemoryAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.allocationSize = imageMemReq.size;
-		allocInfo.memoryTypeIndex = device->GetPhysicalDevice()->FindMemoryType(imageMemReq.memoryTypeBits, info.properties);
-
-		if (vkAllocateMemory(device->GetHandle(), &allocInfo, nullptr, &ret->m_image_memory) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to allocate device memory for image!");
-		}
-		vkBindImageMemory(device->GetHandle(), ret->m_image, ret->m_image_memory, 0);
 
 		return ret;
 	}
 
-	std::shared_ptr<Image> Image::Texture2DFromFile(std::shared_ptr<Device> device, std::shared_ptr<CommandPool> graphics_pool, const char* file_name) {
+	std::shared_ptr<Image> Image::Texture2DFromFile(std::shared_ptr<Allocator> allocator, std::shared_ptr<Device> device, std::shared_ptr<CommandPool> graphics_pool, const char* file_name) {
 		int texWidth, texHeight, texChannels;
 		stbi_uc* pixels = stbi_load(file_name, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 		VkDeviceSize imageSize = texWidth * texHeight * 4;
@@ -59,12 +50,12 @@ namespace VWrap {
 			throw std::runtime_error("Failed to load images!");
 		}
 
-		auto staging_buffer = Buffer::CreateStaging(device, imageSize);
+		auto staging_buffer = Buffer::CreateStaging(allocator, device, imageSize);
 
 		void* data;
-		vkMapMemory(device->GetHandle(), staging_buffer->GetMemory(), 0, imageSize, 0, &data);
+		vmaMapMemory(allocator->Get(), staging_buffer->GetAllocation(), &data);
 		memcpy(data, pixels, static_cast<size_t>(imageSize));
-		vkUnmapMemory(device->GetHandle(), staging_buffer->GetMemory());
+		vmaUnmapMemory(allocator->Get(), staging_buffer->GetAllocation());
 		stbi_image_free(pixels);
 
 		VWrap::ImageCreateInfo info{};
@@ -76,31 +67,14 @@ namespace VWrap {
 		info.properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 		info.mip_levels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
 
-		auto ret = Image::Create(device, graphics_pool, info);
+		auto ret = Image::Create(allocator, device, graphics_pool, info);
 
 		ret->TransitionLayout(VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 		ret->CopyFromBuffer(staging_buffer->GetHandle(), texWidth, texHeight);
-		//ret->TransitionLayout(VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		ret->GenerateMipmaps();
 
 		return ret;
 	}
-
-	//std::shared_ptr<Image> Image::CreateDepthImage(std::shared_ptr<Device> device, std::shared_ptr<CommandPool> graphics_pool, VkExtent2D extent)
-	//{
-	//	VkFormat depthFormat = FindDepthFormat(device);
-
-	//	ImageCreateInfo info{};
-	//	info.format = depthFormat;
-	//	info.width = extent.width;
-	//	info.height = extent.height;
-	//	info.tiling = VK_IMAGE_TILING_OPTIMAL;
-	//	info.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-	//	info.properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-	//	info.mip_levels = 1;
-
-	//	return Create(device, graphics_pool, info);
-	//}
 
 	VkFormat Image::FindSupportedFormat(std::shared_ptr<Device> device, const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
 	{
@@ -187,7 +161,7 @@ namespace VWrap {
 			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		}
 
-		auto graphics_command_buffer = VWrap::CommandBuffer::BeginSingleTimeCommands(m_graphics_pool_ptr);
+		auto graphics_command_buffer = VWrap::CommandBuffer::BeginSingleTimeCommands(m_command_pool);
 		vkCmdPipelineBarrier(
 			graphics_command_buffer->GetHandle(),
 			sourceStage, destinationStage,
@@ -200,7 +174,7 @@ namespace VWrap {
 	}
 
 	void Image::CopyFromBuffer(VkBuffer src, uint32_t width, uint32_t height) {
-		auto command_buffer = VWrap::CommandBuffer::BeginSingleTimeCommands(m_graphics_pool_ptr);
+		auto command_buffer = VWrap::CommandBuffer::BeginSingleTimeCommands(m_command_pool);
 
 		VkBufferImageCopy copy{};
 		copy.bufferOffset = 0;
@@ -221,12 +195,12 @@ namespace VWrap {
 	void Image::GenerateMipmaps() {
 		// Check if image format supports linear blitting
 		VkFormatProperties formatProperties;
-		vkGetPhysicalDeviceFormatProperties(m_device_ptr->GetPhysicalDevice()->getHandle(), m_format, &formatProperties);
+		vkGetPhysicalDeviceFormatProperties(m_device->GetPhysicalDevice()->getHandle(), m_format, &formatProperties);
 		if (!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)) {
 			throw std::runtime_error("texture image format does not support linear blitting!");
 		}
 
-		auto command_buffer = VWrap::CommandBuffer::BeginSingleTimeCommands(m_graphics_pool_ptr);
+		auto command_buffer = VWrap::CommandBuffer::BeginSingleTimeCommands(m_command_pool);
 
 		VkImageMemoryBarrier barrier{};
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -311,11 +285,7 @@ namespace VWrap {
 
 
 	Image::~Image() {
-		if (m_image != VK_NULL_HANDLE)
-			vkDestroyImage(m_device_ptr->GetHandle(), m_image, nullptr);
-
-
-			if (m_image_memory != VK_NULL_HANDLE)
-				vkFreeMemory(m_device_ptr->GetHandle(), m_image_memory, nullptr);
+		if (m_image != VK_NULL_HANDLE && m_allocation != nullptr)
+			vmaDestroyImage(m_allocator->Get(), m_image, m_allocation);
 	}
 }
