@@ -9,7 +9,7 @@ namespace VWrap
 		VmaAllocatorCreateInfo allocatorCreateInfo = {};
 		allocatorCreateInfo.vulkanApiVersion = VK_API_VERSION_1_0;
 		allocatorCreateInfo.physicalDevice = physical_device->Get();
-		allocatorCreateInfo.device = device->GetHandle();
+		allocatorCreateInfo.device = device->Get();
 		allocatorCreateInfo.instance = instance->Get();
 		allocatorCreateInfo.pVulkanFunctions = nullptr;
 

@@ -12,7 +12,7 @@ namespace VWrap {
 		info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		info.queueFamilyIndex = queue->GetQueueFamilyIndex();
 		info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-		if (vkCreateCommandPool(device->GetHandle(), &info, nullptr, &ret->m_command_pool) != VK_SUCCESS) {
+		if (vkCreateCommandPool(device->Get(), &info, nullptr, &ret->m_command_pool) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to create command pool!");
 		}
 
@@ -22,6 +22,6 @@ namespace VWrap {
 	CommandPool::~CommandPool()
 	{
 		if (m_command_pool != VK_NULL_HANDLE)
-			vkDestroyCommandPool(m_device->GetHandle(), m_command_pool, nullptr);
+			vkDestroyCommandPool(m_device->Get(), m_command_pool, nullptr);
 	}
 }

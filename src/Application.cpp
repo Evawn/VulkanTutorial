@@ -3,6 +3,7 @@
 void Application::Run() {
 	InitWindow();
 	InitVulkan();
+	InitImGui();
 	MainLoop();
 	Cleanup();
 }
@@ -43,7 +44,7 @@ void Application::InitVulkan() {
 
 	VkSampleCountFlagBits sample_count = m_physical_device->GetMaxUsableSampleCount();
 
-	m_render_pass = VWrap::RenderPass::Create(m_device, m_frame_controller->GetSwapchain()->GetFormat(), sample_count);
+	m_render_pass = VWrap::RenderPass::CreateImGUI(m_device, m_frame_controller->GetSwapchain()->GetFormat(), sample_count);
 
 	CreateColorResources(sample_count);
 	CreateDepthResources(sample_count);
@@ -56,91 +57,75 @@ void Application::InitVulkan() {
 		m_graphics_command_pool,
 		m_frame_controller->GetSwapchain()->GetExtent(),
 		MAX_FRAMES_IN_FLIGHT);
+}
 
-	// Setup Dear ImGui context
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+void Application::InitImGui() {
+	m_gui_renderer = GUIRenderer::Create(m_device);
 
-	ImGui::StyleColorsDark();
-
+	VWrap::QueueFamilyIndices indices = m_physical_device->FindQueueFamilies();
 	ImGui_ImplGlfw_InitForVulkan(m_glfw_window.get()[0], true);
 
 	ImGui_ImplVulkan_InitInfo init_info{};
 	init_info.Instance = m_instance->Get();
 	init_info.PhysicalDevice = m_physical_device->Get();
-	init_info.Device = m_device->GetHandle();
+	init_info.Device = m_device->Get();
 	init_info.QueueFamily = indices.graphicsFamily.value();
 	init_info.Queue = m_graphics_queue->Get();
-	init_info.PipelineCache = VK_NULL_HANDLE; // TODO : Create pipeline cache ??????
-	init_info.DescriptorPool = VK_NULL_HANDLE; // TODO : Create descriptor pool
-	init_info.Subpass = 0; // TODO: Create subpass for it
+	init_info.PipelineCache = VK_NULL_HANDLE;
+	init_info.DescriptorPool = m_gui_renderer->GetDescriptorPool()->Get();
+	init_info.Subpass = 1;
 	init_info.MinImageCount = m_frame_controller->GetSwapchain()->Size();
 	init_info.ImageCount = m_frame_controller->GetSwapchain()->Size();
-	init_info.MSAASamples = sample_count;
+	init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 	init_info.Allocator = VK_NULL_HANDLE;
 	init_info.CheckVkResultFn = check_vk_result;
-	//ImGui_ImplVulkan_Init(&init_info, m_render_pass->Get());
+	ImGui_ImplVulkan_Init(&init_info, m_render_pass->Get());
 }
 
 void Application::MainLoop() {
 	while (!glfwWindowShouldClose(m_glfw_window.get()[0])) {
 		glfwPollEvents();
+		//DrawFrame();
 		DrawFrame();
 	}
-	vkDeviceWaitIdle(m_device->GetHandle());
+	vkDeviceWaitIdle(m_device->Get());
 }
 
 void Application::Cleanup() {
+	ImGui_ImplVulkan_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 	glfwDestroyWindow(m_glfw_window.get()[0]);
 	glfwTerminate();
 }
 
 void Application::DrawFrame() {
+
 	// ACQUIRE FRAME ------------------------------------------------
 	m_frame_controller->AcquireNext();
 	uint32_t image_index = m_frame_controller->GetImageIndex();
 	uint32_t frame_index = m_frame_controller->GetCurrentFrame();
 	auto command_buffer = m_frame_controller->GetCurrentCommandBuffer();
 
-	// BEGIN RENDER PASS - TODO: ABSTRACT ----------------------------------------
+	// BEGIN RENDER PASS ------------------------------------------------
 	std::shared_ptr<VWrap::Framebuffer> framebuffer = m_framebuffers[image_index];
+	VWrap::CommandBuffer::Begin(command_buffer);
+	VWrap::CommandBuffer::CmdBeginRenderPass(command_buffer, m_render_pass, framebuffer);
 
-	VkCommandBufferBeginInfo beginInfo{};
-	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	beginInfo.flags = 0; // Optional
-	beginInfo.pInheritanceInfo = nullptr; // Optional
-
-	if (vkBeginCommandBuffer(command_buffer->GetHandle(), &beginInfo) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to begin recording command buffer.");
-	}
-
-	VkRenderPassBeginInfo renderPassInfo{};
-	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassInfo.framebuffer = framebuffer->GetHandle();
-	renderPassInfo.renderPass = m_render_pass->Get();
-	renderPassInfo.renderArea.offset = { 0,0 };
-	renderPassInfo.renderArea.extent = framebuffer->GetExtent();
-
-	std::array<VkClearValue, 2> clearValues{};
-	clearValues[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
-	clearValues[1].depthStencil = { 1.0f, 0 };
-
-	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-	renderPassInfo.pClearValues = clearValues.data();
-
-	vkCmdBeginRenderPass(command_buffer->GetHandle(), &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-	// RECORD COMMANDS ------------------------------------------------
+	// RECORD SCENE COMMANDS ------------------------------------------------
 	m_mesh_rasterizer->CmdDraw(command_buffer, frame_index);
 	m_mesh_rasterizer->UpdateUniformBuffer(frame_index);
 
-	// END RENDER PASS - TODO: ABSTRACT ------------------------------------------------
-	vkCmdEndRenderPass(command_buffer->GetHandle());
+	// NEXT SUBPASS ------------------------------------------------
+	vkCmdNextSubpass(command_buffer->Get(), VK_SUBPASS_CONTENTS_INLINE);
 
-	if (vkEndCommandBuffer(command_buffer->GetHandle()) != VK_SUCCESS) {
+	// RECORD GUI COMMANDS ------------------------------------------------
+	m_gui_renderer->CmdDraw(command_buffer);
+
+	// END RENDER PASS - TODO: ABSTRACT ------------------------------------------------
+	vkCmdEndRenderPass(command_buffer->Get());
+
+	if (vkEndCommandBuffer(command_buffer->Get()) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to end command buffer recording!");
 	}
 
@@ -170,7 +155,7 @@ void Application::CreateFramebuffers() {
 
 void Application::CreateDepthResources(VkSampleCountFlagBits samples)
 {
-	VkFormat depthFormat = VWrap::Image::FindDepthFormat(m_device);
+	VkFormat depthFormat = VWrap::FindDepthFormat(m_physical_device->Get());
 
 	VWrap::ImageCreateInfo info{};
 	info.format = depthFormat;
@@ -182,7 +167,7 @@ void Application::CreateDepthResources(VkSampleCountFlagBits samples)
 	info.mip_levels = 1;
 	info.samples = samples;
 
-	auto im = VWrap::Image::Create(m_allocator, m_graphics_command_pool, info);
+	auto im = VWrap::Image::Create(m_allocator, info);
 	m_depth_image_view = VWrap::ImageView::Create(m_device, im, VK_IMAGE_ASPECT_DEPTH_BIT);
 }
 
@@ -198,6 +183,6 @@ void Application::CreateColorResources(VkSampleCountFlagBits samples)
 	info.tiling = VK_IMAGE_TILING_OPTIMAL;
 	info.samples = samples;
 
-	auto im = VWrap::Image::Create(m_allocator, m_graphics_command_pool, info);
+	auto im = VWrap::Image::Create(m_allocator, info);
 	m_color_image_view = VWrap::ImageView::Create(m_device, im, VK_IMAGE_ASPECT_COLOR_BIT);
 }

@@ -28,7 +28,7 @@ namespace VWrap {
         info.minLod = 0.0f;
         info.maxLod = 10.0f;
 
-        if (vkCreateSampler(device->GetHandle(), &info, nullptr, &ret->m_sampler) != VK_SUCCESS) {
+        if (vkCreateSampler(device->Get(), &info, nullptr, &ret->m_sampler) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create texture sampler!");
         }
 
@@ -37,6 +37,6 @@ namespace VWrap {
 
 	Sampler::~Sampler() {
 		if (m_sampler != VK_NULL_HANDLE)
-			vkDestroySampler(m_device->GetHandle(), m_sampler, nullptr);
+			vkDestroySampler(m_device->Get(), m_sampler, nullptr);
 	}
 }

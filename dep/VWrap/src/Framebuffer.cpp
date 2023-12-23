@@ -23,7 +23,7 @@ namespace VWrap {
 		createInfo.attachmentCount = static_cast<uint32_t>(image_view_handles.size());
 		createInfo.pAttachments = image_view_handles.data();
 
-		if (vkCreateFramebuffer(device->GetHandle(), &createInfo, nullptr, &ret->m_framebuffer) != VK_SUCCESS) {
+		if (vkCreateFramebuffer(device->Get(), &createInfo, nullptr, &ret->m_framebuffer) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to create framebuffer!");
 		}
 
@@ -32,6 +32,6 @@ namespace VWrap {
 
 	Framebuffer::~Framebuffer() {
 		if(m_framebuffer != VK_NULL_HANDLE) 
-			vkDestroyFramebuffer(m_device->GetHandle(), m_framebuffer, nullptr);
+			vkDestroyFramebuffer(m_device->Get(), m_framebuffer, nullptr);
 	}
 }

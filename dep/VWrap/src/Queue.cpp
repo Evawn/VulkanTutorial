@@ -8,7 +8,7 @@ namespace VWrap
 		ret->m_device = device;
 		ret->m_queue_family_index = queue_family_index;
 
-		vkGetDeviceQueue(device->GetHandle(), queue_family_index, 0, &ret->m_queue);
+		vkGetDeviceQueue(device->Get(), queue_family_index, 0, &ret->m_queue);
 
 		return ret;
 	}

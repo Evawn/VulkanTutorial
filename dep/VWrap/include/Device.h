@@ -35,7 +35,7 @@ namespace VWrap {
 		/// <summary>
 		/// Gets the underlying vulkan device handle
 		/// </summary>
-		VkDevice GetHandle() const {
+		VkDevice Get() const {
 			return m_device;
 		}
 

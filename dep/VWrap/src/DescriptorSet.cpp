@@ -20,16 +20,16 @@ namespace VWrap {
 
 		VkDescriptorSetAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		allocInfo.descriptorPool = descriptor_pool->GetHandle();
+		allocInfo.descriptorPool = descriptor_pool->Get();
 
 		std::vector<VkDescriptorSetLayout> vk_layouts(count);
 		for (uint32_t i = 0; i < count; i++)
-			vk_layouts[i] = layouts[i]->GetHandle();
+			vk_layouts[i] = layouts[i]->Get();
 
 		allocInfo.pSetLayouts = vk_layouts.data();
 		allocInfo.descriptorSetCount = static_cast<uint32_t>(count);
 
-		if (vkAllocateDescriptorSets(descriptor_pool->GetDevice()->GetHandle(), &allocInfo, handles.data()) != VK_SUCCESS) {
+		if (vkAllocateDescriptorSets(descriptor_pool->GetDevice()->Get(), &allocInfo, handles.data()) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to allocate descriptor set!");
 		}
 

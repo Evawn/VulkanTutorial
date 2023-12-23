@@ -41,7 +41,7 @@ namespace VWrap{
 		/// <summary>
 		/// The underlying vulkan command pool.
 		/// </summary>
-		VkCommandPool GetHandle() const { return m_command_pool; }
+		VkCommandPool Get() const { return m_command_pool; }
 
 		/// <summary>
 		/// Gets the device that created this command pool.

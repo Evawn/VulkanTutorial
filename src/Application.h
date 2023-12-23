@@ -34,6 +34,7 @@
 
 // PROJECT INCLUDES ---------------------------------------------------------------------------------------------
 #include "MeshRasterizer.h"
+#include "GUIRenderer.h"
 
 // STD INCLUDES ----------------------------------------------------------------------------------------------
 #include <iostream>
@@ -118,6 +119,13 @@ private:
 	/// </summary>
 	std::shared_ptr<MeshRasterizer> m_mesh_rasterizer;
 
+	/// <summary>
+	/// Contains and manages the resources needed to render GUI elements.
+	/// </summary>
+	std::shared_ptr<GUIRenderer> m_gui_renderer;
+
+
+
 
 	// CLASS FUNCTIONS -------------------------------------------------------------------------------------------
 public:
@@ -144,6 +152,11 @@ private:
 	void InitVulkan();
 
 	/// <summary>
+	/// Initializes ImGUI.
+	/// </summary>
+	void InitImGui();
+
+	/// <summary>
 	/// Contains the main loop of the application, which polls for events and draws frames.
 	/// </summary>
 	void MainLoop();
@@ -168,10 +181,13 @@ private:
 	/// </summary>
 	void CreateDepthResources(VkSampleCountFlagBits samples);
 
+	/// <summary>
+	/// Creates the color image and image view.
+	/// </summary>
 	void CreateColorResources(VkSampleCountFlagBits samples);
 
 	/// <summary>
-	/// Acquires the current image and frame, records the command buffer, and submits its to be rendered.
+	/// Performs the main rendering operations.
 	/// </summary>
 	void DrawFrame();
 };

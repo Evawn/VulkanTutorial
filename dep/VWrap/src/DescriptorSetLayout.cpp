@@ -26,7 +26,7 @@ namespace VWrap {
         layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
         layoutInfo.pBindings = bindings.data();
 
-        if (vkCreateDescriptorSetLayout(device->GetHandle(), &layoutInfo, nullptr, &ret->m_layout) != VK_SUCCESS) {
+        if (vkCreateDescriptorSetLayout(device->Get(), &layoutInfo, nullptr, &ret->m_layout) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create descriptor set layout!");
         }
 
@@ -36,6 +36,6 @@ namespace VWrap {
 
 	DescriptorSetLayout::~DescriptorSetLayout() {
         if (m_layout != VK_NULL_HANDLE)
-            vkDestroyDescriptorSetLayout(m_device->GetHandle(), m_layout, nullptr);
+            vkDestroyDescriptorSetLayout(m_device->Get(), m_layout, nullptr);
 	}
 }

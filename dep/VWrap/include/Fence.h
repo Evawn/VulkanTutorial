@@ -31,7 +31,7 @@ namespace VWrap {
 		/// <summary>
 		/// Gets the underlying vulkan fence
 		/// </summary>
-		VkFence GetHandle() const { return m_fence; }
+		VkFence Get() const { return m_fence; }
 
 		/// <summary>
 		/// Destroys the underlying fence

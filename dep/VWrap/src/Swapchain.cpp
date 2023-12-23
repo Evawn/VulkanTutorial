@@ -52,17 +52,19 @@ namespace VWrap {
         createInfo.oldSwapchain = VK_NULL_HANDLE;
 
         // Create the swapchain
-        if (vkCreateSwapchainKHR(device->GetHandle(), &createInfo, nullptr, &ret->m_swapchain) != VK_SUCCESS) {
+        if (vkCreateSwapchainKHR(device->Get(), &createInfo, nullptr, &ret->m_swapchain) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create swapchain!");
         }
 
         // Retrieve handles to the swapchain images
-        vkGetSwapchainImagesKHR(device->GetHandle(), ret->m_swapchain, &imageCount, nullptr);
+        vkGetSwapchainImagesKHR(device->Get(), ret->m_swapchain, &imageCount, nullptr);
         ret->m_images.resize(imageCount);
-        vkGetSwapchainImagesKHR(device->GetHandle(), ret->m_swapchain, &imageCount, ret->m_images.data());
+        vkGetSwapchainImagesKHR(device->Get(), ret->m_swapchain, &imageCount, ret->m_images.data());
 
         ret->m_format = format.format;
         ret->m_extent = extent;
+        ret->m_present_mode = mode;
+        ret->m_surface_format = format;
 
         return ret;
 	}
@@ -114,7 +116,7 @@ namespace VWrap {
     Swapchain::~Swapchain() {
         std::cout << "Destroying Swapchain" << std::endl;
         if(m_swapchain != VK_NULL_HANDLE)
-		    vkDestroySwapchainKHR(m_device->GetHandle(), m_swapchain, nullptr);
+		    vkDestroySwapchainKHR(m_device->Get(), m_swapchain, nullptr);
 	}
 
 }

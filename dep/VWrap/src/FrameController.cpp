@@ -17,11 +17,11 @@ namespace VWrap {
 	}
 
 	void FrameController::AcquireNext() {
-		VkFence fences[] = { m_in_flight_fences[m_current_frame]->GetHandle() };
-		vkWaitForFences(m_device->GetHandle(), 1, fences, VK_TRUE, UINT64_MAX);
+		VkFence fences[] = { m_in_flight_fences[m_current_frame]->Get() };
+		vkWaitForFences(m_device->Get(), 1, fences, VK_TRUE, UINT64_MAX);
 
 		//uint32_t imageIndex;
-		VkResult result = vkAcquireNextImageKHR(m_device->GetHandle(), m_swapchain->Get(), UINT64_MAX, m_image_available_semaphores[m_current_frame]->Get(), VK_NULL_HANDLE, &m_image_index);
+		VkResult result = vkAcquireNextImageKHR(m_device->Get(), m_swapchain->Get(), UINT64_MAX, m_image_available_semaphores[m_current_frame]->Get(), VK_NULL_HANDLE, &m_image_index);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR) {
 			RecreateSwapchain();
@@ -31,7 +31,7 @@ namespace VWrap {
 			throw std::runtime_error("failed to acquire swap chain image!");
 		}
 
-		vkResetCommandBuffer(m_command_buffers[m_current_frame]->GetHandle(), 0);
+		vkResetCommandBuffer(m_command_buffers[m_current_frame]->Get(), 0);
 	}
 
 	void FrameController::Render() {
@@ -46,20 +46,20 @@ namespace VWrap {
 
 		submitInfo.commandBufferCount = 1;
 
-		std::array<VkCommandBuffer, 1> commandBuffers = { m_command_buffers[m_current_frame]->GetHandle() };
+		std::array<VkCommandBuffer, 1> commandBuffers = { m_command_buffers[m_current_frame]->Get() };
 		submitInfo.pCommandBuffers = commandBuffers.data();
 
 		VkSemaphore signalSemaphores[] = { m_render_finished_semaphores[m_current_frame]->Get() };
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = signalSemaphores;
 
-		VkFence fences[] = { m_in_flight_fences[m_current_frame]->GetHandle() };
-		vkResetFences(m_device->GetHandle(), 1, fences);
+		VkFence fences[] = { m_in_flight_fences[m_current_frame]->Get() };
+		vkResetFences(m_device->Get(), 1, fences);
 
 		if (vkQueueSubmit(m_graphics_command_pool->GetQueue()->Get(),
 			1,
 			&submitInfo,
-			m_in_flight_fences[m_current_frame]->GetHandle()) != VK_SUCCESS) {
+			m_in_flight_fences[m_current_frame]->Get()) != VK_SUCCESS) {
 
 			throw std::runtime_error("Failed to submit to graphics queue!");
 		}
@@ -96,7 +96,7 @@ namespace VWrap {
 			glfwGetFramebufferSize(m_surface->GetWindow().get()[0], &width, &height);
 			glfwWaitEvents();
 		}
-		vkDeviceWaitIdle(m_device->GetHandle());
+		vkDeviceWaitIdle(m_device->Get());
 
 
 		for (auto image_view : m_image_views)

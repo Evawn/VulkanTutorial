@@ -16,7 +16,7 @@ inline void MeshRasterizer::CreateVertexBuffer() {
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 		0);
 
-	m_vertex_buffer->CopyFromBuffer(m_graphics_pool, staging_buffer, bufferSize);
+	VWrap::CommandBuffer::CopyBuffer(m_graphics_pool, staging_buffer, m_vertex_buffer, bufferSize);
 }
 
 inline void MeshRasterizer::CreateIndexBuffer() {
@@ -35,7 +35,7 @@ inline void MeshRasterizer::CreateIndexBuffer() {
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 		0);
 
-	m_index_buffer->CopyFromBuffer(m_graphics_pool, staging_buffer, bufferSize);
+	VWrap::CommandBuffer::CopyBuffer(m_graphics_pool, staging_buffer, m_index_buffer, bufferSize);
 }
 
 inline void MeshRasterizer::CreateUniformBuffers() {
@@ -58,7 +58,7 @@ inline void MeshRasterizer::CreateUniformBuffers() {
 inline void MeshRasterizer::UpdateDescriptorSets() {
 	for (size_t i = 0; i < m_descriptor_sets.size(); i++) {
 		VkDescriptorBufferInfo bufferInfo{};
-		bufferInfo.buffer = m_uniform_buffers[i]->GetHandle();
+		bufferInfo.buffer = m_uniform_buffers[i]->Get();
 		bufferInfo.offset = 0;
 		bufferInfo.range = sizeof(UniformBufferObject);
 
@@ -72,7 +72,7 @@ inline void MeshRasterizer::UpdateDescriptorSets() {
 		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptorWrites[0].descriptorCount = 1;
 		descriptorWrites[0].dstBinding = 0;
-		descriptorWrites[0].dstSet = m_descriptor_sets[i]->GetHandle();
+		descriptorWrites[0].dstSet = m_descriptor_sets[i]->Get();
 		descriptorWrites[0].dstArrayElement = 0;
 		descriptorWrites[0].pBufferInfo = &bufferInfo;
 		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -80,12 +80,12 @@ inline void MeshRasterizer::UpdateDescriptorSets() {
 		descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptorWrites[1].descriptorCount = 1;
 		descriptorWrites[1].dstBinding = 1;
-		descriptorWrites[1].dstSet = m_descriptor_sets[i]->GetHandle();
+		descriptorWrites[1].dstSet = m_descriptor_sets[i]->Get();
 		descriptorWrites[1].dstArrayElement = 0;
 		descriptorWrites[1].pImageInfo = &imageInfo;
 		descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 
-		vkUpdateDescriptorSets(m_device->GetHandle(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+		vkUpdateDescriptorSets(m_device->Get(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 	}
 }
 
@@ -140,7 +140,7 @@ std::shared_ptr<MeshRasterizer> MeshRasterizer::Create(std::shared_ptr<VWrap::Al
 	ret->m_pipeline = VWrap::Pipeline::Create(device, render_pass, ret->m_descriptor_set_layout, extent);
 	ret->m_sampler = VWrap::Sampler::Create(device);
 
-	ret->m_texture_image = VWrap::Image::Texture2DFromFile(allocator, graphics_pool, TEXTURE_PATH.data());
+	VWrap::CommandBuffer::UploadTextureToImage(graphics_pool, allocator, ret->m_texture_image, TEXTURE_PATH.c_str());
 	ret->m_texture_image_view = VWrap::ImageView::Create(device, ret->m_texture_image);
 
 
@@ -159,10 +159,10 @@ std::shared_ptr<MeshRasterizer> MeshRasterizer::Create(std::shared_ptr<VWrap::Al
 }
 
 void MeshRasterizer::CmdDraw(std::shared_ptr<VWrap::CommandBuffer> command_buffer, uint32_t frame) {
-	auto vk_command_buffer = command_buffer->GetHandle();
+	auto vk_command_buffer = command_buffer->Get();
 	vkCmdBindPipeline(vk_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline->Get());
 
-	std::array<VkDescriptorSet, 1> descriptorSets = { m_descriptor_sets[frame]->GetHandle() };
+	std::array<VkDescriptorSet, 1> descriptorSets = { m_descriptor_sets[frame]->Get() };
 	vkCmdBindDescriptorSets(vk_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline->GetLayout(), 0, 1, descriptorSets.data(), 0, nullptr);
 
 	VkViewport viewport{};
@@ -181,10 +181,10 @@ void MeshRasterizer::CmdDraw(std::shared_ptr<VWrap::CommandBuffer> command_buffe
 
 	vkCmdSetScissor(vk_command_buffer, 0, 1, &scissor);
 
-	VkBuffer vertexBuffers[] = { m_vertex_buffer->GetHandle() };
+	VkBuffer vertexBuffers[] = { m_vertex_buffer->Get() };
 	VkDeviceSize offsets[] = { 0 };
 	vkCmdBindVertexBuffers(vk_command_buffer, 0, 1, vertexBuffers, offsets);
-	vkCmdBindIndexBuffer(vk_command_buffer, m_index_buffer->GetHandle(), 0, VK_INDEX_TYPE_UINT32);
+	vkCmdBindIndexBuffer(vk_command_buffer, m_index_buffer->Get(), 0, VK_INDEX_TYPE_UINT32);
 	vkCmdDrawIndexed(vk_command_buffer, static_cast<uint32_t>(m_indices.size()), 1, 0, 0, 0);
 }
 

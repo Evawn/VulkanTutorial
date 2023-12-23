@@ -49,7 +49,7 @@ namespace VWrap {
 		/// <summary>
 		/// Gets the underlying vulkan framebuffer
 		/// </summary>
-		VkFramebuffer GetHandle() const { return m_framebuffer; }
+		VkFramebuffer Get() const { return m_framebuffer; }
 
 		/// <summary>
 		/// Gets the attachments of this framebuffer

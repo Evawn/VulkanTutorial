@@ -32,7 +32,7 @@ namespace VWrap {
 		/// <summary>
 		/// Gets the underlying vulkan descriptor set layout.
 		///	</summary>
-		VkDescriptorSetLayout GetHandle() const { return m_layout; }
+		VkDescriptorSetLayout Get() const { return m_layout; }
 
 		/// <summary>
 		///	Destroys the underlying vulkan descriptor set layout.

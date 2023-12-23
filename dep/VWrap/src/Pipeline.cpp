@@ -115,14 +115,14 @@ namespace VWrap {
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 
-        std::array<VkDescriptorSetLayout, 1> descriptor_set_layout_handles = { descriptor_set_layout->GetHandle() };
+        std::array<VkDescriptorSetLayout, 1> descriptor_set_layout_handles = { descriptor_set_layout->Get() };
         pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptor_set_layout_handles.size());
         pipelineLayoutInfo.pSetLayouts = descriptor_set_layout_handles.data();
         pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
         pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
 
-        if (vkCreatePipelineLayout(device->GetHandle(), &pipelineLayoutInfo, nullptr, &ret->m_pipeline_layout) != VK_SUCCESS) {
+        if (vkCreatePipelineLayout(device->Get(), &pipelineLayoutInfo, nullptr, &ret->m_pipeline_layout) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create pipline layout!");
         }
 
@@ -156,12 +156,12 @@ namespace VWrap {
         pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
         pipelineInfo.basePipelineIndex = -1;
 
-        if (vkCreateGraphicsPipelines(device->GetHandle(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &ret->m_pipeline) != VK_SUCCESS) {
+        if (vkCreateGraphicsPipelines(device->Get(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &ret->m_pipeline) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create graphics pipeline!");
         }
 
-        vkDestroyShaderModule(device->GetHandle(), vertShaderModule, nullptr);
-        vkDestroyShaderModule(device->GetHandle(), fragShaderModule, nullptr);
+        vkDestroyShaderModule(device->Get(), vertShaderModule, nullptr);
+        vkDestroyShaderModule(device->Get(), fragShaderModule, nullptr);
 
         return ret;
     }
@@ -172,7 +172,7 @@ namespace VWrap {
         createInfo.codeSize = code.size();
         createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
         VkShaderModule shaderModule;
-        if (vkCreateShaderModule(device->GetHandle(), &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
+        if (vkCreateShaderModule(device->Get(), &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create shader module!");
         }
         return shaderModule;
@@ -180,9 +180,9 @@ namespace VWrap {
 
     Pipeline::~Pipeline() {
         if (m_pipeline != VK_NULL_HANDLE)
-            vkDestroyPipeline(m_device->GetHandle(), m_pipeline, nullptr);
+            vkDestroyPipeline(m_device->Get(), m_pipeline, nullptr);
         if (m_pipeline_layout != VK_NULL_HANDLE)
-			vkDestroyPipelineLayout(m_device->GetHandle(), m_pipeline_layout, nullptr);
+			vkDestroyPipelineLayout(m_device->Get(), m_pipeline_layout, nullptr);
     }
 
 }

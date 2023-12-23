@@ -27,7 +27,7 @@ namespace VWrap {
 		/// <summary>
 		/// Creates a new render pass on the device, with the given image format and sample count
 		/// </summary>
-		static std::shared_ptr<RenderPass> Create(std::shared_ptr<Device> device, VkFormat format, VkSampleCountFlagBits samples);
+		static std::shared_ptr<RenderPass> CreateImGUI(std::shared_ptr<Device> device, VkFormat format, VkSampleCountFlagBits samples);
 
 		/// <summary> Gets the underlying Vulkan render pass </summary>
 		VkRenderPass Get() const { return m_render_pass; }

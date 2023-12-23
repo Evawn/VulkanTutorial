@@ -35,6 +35,12 @@ namespace VWrap {
 		/// <summary> The images of this swapchain. </summary>
 		std::vector<VkImage> m_images;
 
+		/// <summary> The present mode of this swapchain. </summary>
+		VkPresentModeKHR m_present_mode;
+
+		/// <summary> The surface format of this swapchain. </summary>
+		VkSurfaceFormatKHR m_surface_format;
+
 		/// <summary>
 		/// Returns the optimal surface format from a list of formats.
 		/// (VK_FORMAT_B8G8R8A8_SRGB) and (VK_COLOR_SPACE_SRGB_NONLINEAR_KHR).
@@ -77,6 +83,16 @@ namespace VWrap {
 		/// <summary> Gets the images of this swapchain. </summary>
 		std::vector<VkImage> GetVkImages() const {
 			return m_images;
+		}
+
+		/// <summary> Gets the present mode of this swapchain. </summary>
+		VkPresentModeKHR GetPresentMode() const {
+			return m_present_mode;
+		}
+
+		/// <summary> Gets the surface format of this swapchain. </summary>
+		VkSurfaceFormatKHR GetSurfaceFormat() const {
+			return m_surface_format;
 		}
 
 		/// <summary> Gets the number of images in this swapchain. </summary>

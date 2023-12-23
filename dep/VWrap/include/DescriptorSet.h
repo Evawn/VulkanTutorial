@@ -45,7 +45,7 @@ namespace VWrap {
 		/// <summary>
 		/// Gets the underlying vulkan descriptor set handle.
 		/// </summary>
-		VkDescriptorSet GetHandle() const { return m_descriptor_set; }
+		VkDescriptorSet Get() const { return m_descriptor_set; }
 
 		/// <summary>
 		/// Gets the descriptor pool that this descriptor set was allocated from.

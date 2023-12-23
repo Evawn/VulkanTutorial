@@ -2,8 +2,6 @@
 #include "vulkan/vulkan.h"
 #include <memory>
 #include "Device.h"
-#include "CommandPool.h"
-#include "CommandBuffer.h"
 #include "vk_mem_alloc.h"
 #include "Allocator.h"
 
@@ -56,15 +54,12 @@ namespace VWrap {
 			VkMemoryPropertyFlags properties,
 			void*& data);
 
-		/// <summary>
-		/// Copies the data from the source buffer to this buffer
-		/// </summary>
-		void CopyFromBuffer(std::shared_ptr<CommandPool> command_pool, std::shared_ptr<Buffer> src_buffer, VkDeviceSize size);
+
 
 		/// <summary>
 		/// Gets the underlying buffer handle.
 		/// </summary>
-		VkBuffer GetHandle() const { return m_buffer; }
+		VkBuffer Get() const { return m_buffer; }
 
 		VmaAllocation GetAllocation() const { return m_allocation; }
 

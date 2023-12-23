@@ -79,18 +79,6 @@ namespace VWrap {
         return ret;
     }
 
-    void Buffer::CopyFromBuffer(std::shared_ptr<CommandPool> command_pool, std::shared_ptr<Buffer> src, VkDeviceSize size) {
-        auto command_buffer = VWrap::CommandBuffer::BeginSingleTimeCommands(command_pool);
-
-        VkBufferCopy copyRegion{};
-        copyRegion.size = size;
-        copyRegion.dstOffset = 0;
-        copyRegion.srcOffset = 0;
-
-        vkCmdCopyBuffer(command_buffer->GetHandle(), src->GetHandle(), m_buffer, 1, &copyRegion);
-
-        VWrap::CommandBuffer::EndSingleTimeCommands(command_buffer);
-    }
 
 	Buffer::~Buffer() {
 		if (m_buffer != VK_NULL_HANDLE && m_allocation != nullptr)

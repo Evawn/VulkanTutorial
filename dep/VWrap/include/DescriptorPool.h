@@ -26,12 +26,17 @@ namespace VWrap {
 		/// <summary>
 		/// Creates a new descriptor pool from the given device, that can allocate the given number of descriptor sets.
 		/// </summary>
-		static std::shared_ptr<DescriptorPool> Create(std::shared_ptr<Device> device, uint32_t num_sets);
+		static std::shared_ptr<DescriptorPool> Create(std::shared_ptr<Device> device, uint32_t max_sets);
+
+		/// <summary>
+		/// Creates a new descriptor pool from the given device, that can allocate the given number of descriptor sets.
+		/// </summary>
+		static std::shared_ptr<DescriptorPool> Create(std::shared_ptr<Device> device, std::vector<VkDescriptorPoolSize> pool_sizes, uint32_t max_sets, VkDescriptorPoolCreateFlags flags);
 
 		/// <summary>
 		/// Gets the underlying Vulkan descriptor pool.
 		/// </summary>
-		VkDescriptorPool GetHandle() const { return m_descriptor_pool; }
+		VkDescriptorPool Get() const { return m_descriptor_pool; }
 
 		/// <summary>
 		/// Gets the device that created this descriptor pool.

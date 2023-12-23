@@ -10,7 +10,7 @@ namespace VWrap {
 		info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 		info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-		if (vkCreateFence(device->GetHandle(), &info, nullptr, &ret->m_fence) != VK_SUCCESS) {
+		if (vkCreateFence(device->Get(), &info, nullptr, &ret->m_fence) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to create Fence!");
 		}
 
@@ -19,6 +19,6 @@ namespace VWrap {
 
 	Fence::~Fence() {
 		if (m_fence != VK_NULL_HANDLE)
-			vkDestroyFence(m_device->GetHandle(), m_fence, nullptr);
+			vkDestroyFence(m_device->Get(), m_fence, nullptr);
 	}
 }
