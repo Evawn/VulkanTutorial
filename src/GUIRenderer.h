@@ -21,6 +21,11 @@ private:
 	/// </summary>
 	std::shared_ptr<VWrap::DescriptorPool> m_imgui_descriptor_pool;
 
+	/// <summary>
+	/// The DPI scale.
+	/// </summary>
+	float m_dpi_scale = 1.0f;
+
 public:
 
 	/// <summary>
@@ -31,13 +36,22 @@ public:
 	/// <summary>
 	/// Records to the command buffer ImGui draw commands.
 	/// </summary>
-	void CmdDraw(std::shared_ptr<VWrap::CommandBuffer> command_buffer);
+	void CmdDraw(std::shared_ptr<VWrap::CommandBuffer> command_buffer, float time= -1.0f, float fps = -1.0f);
 
 	/// <summary>
 	/// Returns descriptor pool for ImGui.
 	/// </summary>
 	std::shared_ptr<VWrap::DescriptorPool> GetDescriptorPool() const {
 		return m_imgui_descriptor_pool;
+	}
+
+	/// <summary>
+	/// Sets DPI scale for ImGui.
+	/// </summary>
+	void SetDpiScale(float dpi_scale) {
+		ImGuiIO& io = ImGui::GetIO();
+		m_dpi_scale = dpi_scale;
+		io.FontGlobalScale = dpi_scale;
 	}
 };
 

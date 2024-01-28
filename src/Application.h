@@ -35,6 +35,7 @@
 // PROJECT INCLUDES ---------------------------------------------------------------------------------------------
 #include "MeshRasterizer.h"
 #include "GUIRenderer.h"
+#include "GPUProfiler.h"
 
 // STD INCLUDES ----------------------------------------------------------------------------------------------
 #include <iostream>
@@ -80,6 +81,12 @@ static void check_vk_result(VkResult err)
 		abort();
 }
 
+static struct MoveState {
+	bool up, down, left, right, forward, back = false;
+};
+
+static MoveState move_state{ false, false, false, false, false, false };
+
 /// <summary>
 /// This class is the main application class. It contains all the vulkan objects
 /// and the main loop. 
@@ -124,8 +131,10 @@ private:
 	/// </summary>
 	std::shared_ptr<GUIRenderer> m_gui_renderer;
 
-
-
+	/// <summary>
+	/// Contains and manages the resources needed to profile the GPU.
+	/// </summary>
+	std::shared_ptr<GPUProfiler> m_gpu_profiler;
 
 	// CLASS FUNCTIONS -------------------------------------------------------------------------------------------
 public:
@@ -140,6 +149,10 @@ private:
 	/// Callback function for when the window is resized. Notifies the frame controller to resize.
 	/// </summary>
 	static void glfw_FramebufferResizeCallback(GLFWwindow* window, int width, int height);
+
+	static void glfw_KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+
+	static void PollMoveState(GLFWwindow* window);
 
 	/// <summary>
 	/// Initializes the window and sets references in GLFW to the app and resize callback.

@@ -13,15 +13,39 @@ void Application::InitWindow() {
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-	m_glfw_window = std::make_shared<GLFWwindow*>(glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr));
+	float dpi_scale;
+	glfwGetMonitorContentScale(glfwGetPrimaryMonitor(), &dpi_scale, nullptr);
+	m_glfw_window = std::make_shared<GLFWwindow*>(glfwCreateWindow(WIDTH*dpi_scale, HEIGHT*dpi_scale, "Vulkan", nullptr, nullptr));
 
 	glfwSetWindowUserPointer(m_glfw_window.get()[0], this);
 	glfwSetFramebufferSizeCallback(m_glfw_window.get()[0], glfw_FramebufferResizeCallback);
+	glfwSetKeyCallback(m_glfw_window.get()[0], glfw_KeyCallback);
 }
 
 void Application::glfw_FramebufferResizeCallback(GLFWwindow* window, int width, int height) {
 	auto app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
 	app->m_frame_controller->SetResized(true);
+}
+
+void Application::glfw_KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+	if (action != GLFW_PRESS) return;
+
+	switch(key){
+	case GLFW_KEY_ESCAPE:
+		glfwSetWindowShouldClose(window, GLFW_TRUE);
+		break;
+	default:
+		return;
+	}
+}
+
+void Application::PollMoveState(GLFWwindow* window) {
+	move_state.up = glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
+	move_state.down = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
+	move_state.left = glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS;
+	move_state.right = glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS;
+	move_state.forward = glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS;
+	move_state.back = glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS;
 }
 
 void Application::InitVulkan() {
@@ -57,6 +81,8 @@ void Application::InitVulkan() {
 		m_graphics_command_pool,
 		m_frame_controller->GetSwapchain()->GetExtent(),
 		MAX_FRAMES_IN_FLIGHT);
+
+	m_gpu_profiler = GPUProfiler::Create(m_device, MAX_FRAMES_IN_FLIGHT);
 }
 
 void Application::InitImGui() {
@@ -80,12 +106,26 @@ void Application::InitImGui() {
 	init_info.Allocator = VK_NULL_HANDLE;
 	init_info.CheckVkResultFn = check_vk_result;
 	ImGui_ImplVulkan_Init(&init_info, m_render_pass->Get());
+
+	float dpi_scale;
+	glfwGetWindowContentScale(m_glfw_window.get()[0], &dpi_scale, nullptr);
+	m_gui_renderer->SetDpiScale(dpi_scale);
 }
 
 void Application::MainLoop() {
 	while (!glfwWindowShouldClose(m_glfw_window.get()[0])) {
+		move_state = { false, false, false, false, false, false };
 		glfwPollEvents();
-		//DrawFrame();
+		PollMoveState(m_glfw_window.get()[0]);
+
+		//if (move_state.up) std::cout << "UP ";
+		//if (move_state.down) std::cout << "DOWN ";
+		//if (move_state.left) std::cout << "LEFT ";
+		//if (move_state.right) std::cout << "RIGHT ";
+		//if (move_state.forward) std::cout << "FORWARD ";
+		//if (move_state.back) std::cout << "BACK ";
+		//std::cout << std::endl;
+		
 		DrawFrame();
 	}
 	vkDeviceWaitIdle(m_device->Get());
@@ -107,20 +147,30 @@ void Application::DrawFrame() {
 	uint32_t frame_index = m_frame_controller->GetCurrentFrame();
 	auto command_buffer = m_frame_controller->GetCurrentCommandBuffer();
 
-	// BEGIN RENDER PASS ------------------------------------------------
+	// BEGIN RECORDING ------------------------------------------------
 	std::shared_ptr<VWrap::Framebuffer> framebuffer = m_framebuffers[image_index];
 	VWrap::CommandBuffer::Begin(command_buffer);
+
+	// BEGIN PROFILING ------------------------------------------------
+	m_gpu_profiler->CmdBegin(command_buffer, frame_index);
+
+	// BEGIN RENDER PASS ------------------------------------------------
 	VWrap::CommandBuffer::CmdBeginRenderPass(command_buffer, m_render_pass, framebuffer);
 
 	// RECORD SCENE COMMANDS ------------------------------------------------
-	m_mesh_rasterizer->CmdDraw(command_buffer, frame_index);
 	m_mesh_rasterizer->UpdateUniformBuffer(frame_index);
+	m_mesh_rasterizer->CmdDraw(command_buffer, frame_index);
+	
+
+	// END PROFILING ------------------------------------------------
+	m_gpu_profiler->CmdEnd(command_buffer, frame_index);
 
 	// NEXT SUBPASS ------------------------------------------------
 	vkCmdNextSubpass(command_buffer->Get(), VK_SUBPASS_CONTENTS_INLINE);
 
 	// RECORD GUI COMMANDS ------------------------------------------------
-	m_gui_renderer->CmdDraw(command_buffer);
+	GPUProfiler::PerformanceMetrics metrics = m_gpu_profiler->GetMetrics(frame_index);
+	m_gui_renderer->CmdDraw(command_buffer, metrics.render_time, metrics.fps);
 
 	// END RENDER PASS - TODO: ABSTRACT ------------------------------------------------
 	vkCmdEndRenderPass(command_buffer->Get());
@@ -137,7 +187,12 @@ void Application::Resize() {
 	CreateColorResources(m_render_pass->GetSamples());
 	CreateDepthResources(m_render_pass->GetSamples());
 	CreateFramebuffers();
+
 	m_mesh_rasterizer->Resize(m_frame_controller->GetSwapchain()->GetExtent());
+
+	float dpi_scale;
+	glfwGetWindowContentScale(m_glfw_window.get()[0], &dpi_scale, nullptr);
+	m_gui_renderer->SetDpiScale(dpi_scale);
 }
 
 void Application::CreateFramebuffers() {
