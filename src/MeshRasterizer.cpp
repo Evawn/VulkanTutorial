@@ -188,7 +188,7 @@ void MeshRasterizer::CmdDraw(std::shared_ptr<VWrap::CommandBuffer> command_buffe
 	vkCmdDrawIndexed(vk_command_buffer, static_cast<uint32_t>(m_indices.size()), 1, 0, 0, 0);
 }
 
-void MeshRasterizer::UpdateUniformBuffer(uint32_t frame) {
+void MeshRasterizer::UpdateUniformBuffer(uint32_t frame, std::shared_ptr<Camera> camera) {
 	static auto startTime = std::chrono::high_resolution_clock::now();
 
 	auto currentTime = std::chrono::high_resolution_clock::now();
@@ -196,9 +196,12 @@ void MeshRasterizer::UpdateUniformBuffer(uint32_t frame) {
 
 	UniformBufferObject ubo{};
 	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.proj = glm::perspective(glm::radians(45.0f), (float)m_extent.width / (float)m_extent.height, 0.1f, 10.0f);
-	ubo.proj[1][1] *= -1;
+	ubo.view = camera->GetViewMatrix();
+	ubo.proj = camera->GetProjectionMatrix();
+
+	//ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	//ubo.proj = glm::perspective(glm::radians(45.0f), (float)m_extent.width / (float)m_extent.height, 0.1f, 10.0f);
+	//ubo.proj[1][1] *= -1;
 
 	memcpy(m_uniform_buffers_mapped[frame], &ubo, sizeof(ubo));
 }

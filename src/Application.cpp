@@ -74,15 +74,18 @@ void Application::InitVulkan() {
 	CreateDepthResources(sample_count);
 	CreateFramebuffers();
 
+	VkExtent2D extent = m_frame_controller->GetSwapchain()->GetExtent();
 	m_mesh_rasterizer = MeshRasterizer::Create(
 		m_allocator,
 		m_device, 
 		m_render_pass,
 		m_graphics_command_pool,
-		m_frame_controller->GetSwapchain()->GetExtent(),
+		extent,
 		MAX_FRAMES_IN_FLIGHT);
 
 	m_gpu_profiler = GPUProfiler::Create(m_device, MAX_FRAMES_IN_FLIGHT);
+
+	m_camera = Camera::Create(45, ((float)extent.width/(float)extent.height), 0.1f, 10.0f);
 }
 
 void Application::InitImGui() {
@@ -113,11 +116,16 @@ void Application::InitImGui() {
 }
 
 void Application::MainLoop() {
+	auto last_time = std::chrono::high_resolution_clock::now();
 	while (!glfwWindowShouldClose(m_glfw_window.get()[0])) {
+		auto current_time = std::chrono::high_resolution_clock::now();
+		float dt = std::chrono::duration<float, std::chrono::seconds::period>(current_time - last_time).count();
+		last_time = current_time;
+
 		move_state = { false, false, false, false, false, false };
 		glfwPollEvents();
 		PollMoveState(m_glfw_window.get()[0]);
-
+		MoveCamera(dt);
 		//if (move_state.up) std::cout << "UP ";
 		//if (move_state.down) std::cout << "DOWN ";
 		//if (move_state.left) std::cout << "LEFT ";
@@ -158,7 +166,7 @@ void Application::DrawFrame() {
 	VWrap::CommandBuffer::CmdBeginRenderPass(command_buffer, m_render_pass, framebuffer);
 
 	// RECORD SCENE COMMANDS ------------------------------------------------
-	m_mesh_rasterizer->UpdateUniformBuffer(frame_index);
+	m_mesh_rasterizer->UpdateUniformBuffer(frame_index, m_camera);
 	m_mesh_rasterizer->CmdDraw(command_buffer, frame_index);
 	
 
@@ -188,7 +196,9 @@ void Application::Resize() {
 	CreateDepthResources(m_render_pass->GetSamples());
 	CreateFramebuffers();
 
-	m_mesh_rasterizer->Resize(m_frame_controller->GetSwapchain()->GetExtent());
+	VkExtent2D extent = m_frame_controller->GetSwapchain()->GetExtent();
+	m_mesh_rasterizer->Resize(extent);
+	m_camera = Camera::Create(45, ((float)extent.width / (float)extent.height), 0.1f, 10.0f);
 
 	float dpi_scale;
 	glfwGetWindowContentScale(m_glfw_window.get()[0], &dpi_scale, nullptr);
@@ -240,4 +250,16 @@ void Application::CreateColorResources(VkSampleCountFlagBits samples)
 
 	auto im = VWrap::Image::Create(m_allocator, info);
 	m_color_image_view = VWrap::ImageView::Create(m_device, im, VK_IMAGE_ASPECT_COLOR_BIT);
+}
+
+void Application::MoveCamera(float dt) {
+	float speed = 2.0f;
+	float distance = speed * dt;
+
+	if (move_state.up && !move_state.down) m_camera->MoveUp(distance);
+	if (move_state.down && !move_state.up) m_camera->MoveUp(-distance);
+	if (move_state.left && !move_state.right) m_camera->MoveRight(-distance);
+	if (move_state.right && !move_state.left) m_camera->MoveRight(distance);
+	if (move_state.forward && !move_state.back) m_camera->MoveForward(distance);
+	if (move_state.back && !move_state.forward) m_camera->MoveForward(-distance);
 }

@@ -15,6 +15,8 @@
 #include "Sampler.h"
 #include "Allocator.h"
 
+#include "Camera.h"
+
 #include "tiny_obj_loader.h"
 #include <unordered_map>
 #include <chrono>
@@ -138,7 +140,7 @@ public:
 	/// Updates the uniform buffer for the given frame using perpetually-mapped memory.
 	/// </summary>
 	/// <param name="frame"> The index of the buffer to update. </param>
-	void UpdateUniformBuffer(uint32_t frame);
+	void UpdateUniformBuffer(uint32_t frame, std::shared_ptr<Camera> camera);
 
 	/// <summary>
 	/// Updates the extent of the pipeline.

@@ -36,6 +36,7 @@
 #include "MeshRasterizer.h"
 #include "GUIRenderer.h"
 #include "GPUProfiler.h"
+#include "Camera.h"
 
 // STD INCLUDES ----------------------------------------------------------------------------------------------
 #include <iostream>
@@ -136,6 +137,11 @@ private:
 	/// </summary>
 	std::shared_ptr<GPUProfiler> m_gpu_profiler;
 
+	/// <summary>
+	/// The camera used to view the scene.
+	/// </summary>
+	std::shared_ptr<Camera> m_camera;
+
 	// CLASS FUNCTIONS -------------------------------------------------------------------------------------------
 public:
 
@@ -153,6 +159,8 @@ private:
 	static void glfw_KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 	static void PollMoveState(GLFWwindow* window);
+
+	void MoveCamera(float dt);
 
 	/// <summary>
 	/// Initializes the window and sets references in GLFW to the app and resize callback.
