@@ -31,6 +31,8 @@ namespace VWrap {
 		/// </summary>
 		static std::shared_ptr<ImageView> Create(std::shared_ptr<Device> device, VkImage image, VkFormat format, VkImageAspectFlags aspect = VK_IMAGE_ASPECT_COLOR_BIT, uint32_t mip_levels = 1);
 
+		static std::shared_ptr<ImageView> Create3D(std::shared_ptr<Device> device, std::shared_ptr<Image> image, VkImageAspectFlags aspect = VK_IMAGE_ASPECT_COLOR_BIT);
+
 		/// <summary> Gets the Vulkan image view handle. </summary>
 		VkImageView Get() const { return m_image_view; }
 

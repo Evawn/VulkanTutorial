@@ -13,7 +13,7 @@ namespace VWrap {
 
 	/// <summary> Describes parameters for creating an image </summary>
 	struct ImageCreateInfo {
-		uint32_t width, height;
+		uint32_t width, height, depth;
 		VkFormat format;
 		VkImageTiling tiling;
 		VkImageUsageFlags usage;
@@ -47,7 +47,9 @@ namespace VWrap {
 
 	public:
 		/// <summary> Creates a new image </summary>
-		static std::shared_ptr<Image> Create(std::shared_ptr<Allocator> allocator,  ImageCreateInfo& info);
+		static std::shared_ptr<Image> Create2D(std::shared_ptr<Allocator> allocator,  ImageCreateInfo& info);
+
+		static std::shared_ptr<Image> Create3D(std::shared_ptr<Allocator> allocator, ImageCreateInfo& info);
 
 		/// <summary>
 		/// Returns the image handle

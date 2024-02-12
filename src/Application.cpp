@@ -1,11 +1,38 @@
 #include "Application.h"
 
 void Application::Run() {
+	Init();
+	MainLoop();
+	Cleanup();
+}
+
+void Application::Init() {
 	InitWindow();
 	InitVulkan();
 	InitImGui();
-	MainLoop();
-	Cleanup();
+	VkExtent2D extent = m_frame_controller->GetSwapchain()->GetExtent();
+	m_mesh_rasterizer = MeshRasterizer::Create(
+		m_allocator,
+		m_device,
+		m_render_pass,
+		m_graphics_command_pool,
+		extent,
+		MAX_FRAMES_IN_FLIGHT);
+
+	m_octree_tracer = OctreeTracer::Create(
+		m_allocator,
+		m_device,
+		m_render_pass,
+		m_graphics_command_pool,
+		extent,
+		MAX_FRAMES_IN_FLIGHT);
+
+	m_gpu_profiler = GPUProfiler::Create(m_device, MAX_FRAMES_IN_FLIGHT);
+
+	m_camera = Camera::Create(45, ((float)extent.width / (float)extent.height), 0.1f, 10.0f);
+
+	Input::Init(m_glfw_window.get()[0]);
+	Input::AddContext(m_main_context);
 }
 
 void Application::InitWindow() {
@@ -15,11 +42,11 @@ void Application::InitWindow() {
 
 	float dpi_scale;
 	glfwGetMonitorContentScale(glfwGetPrimaryMonitor(), &dpi_scale, nullptr);
-	m_glfw_window = std::make_shared<GLFWwindow*>(glfwCreateWindow(WIDTH*dpi_scale, HEIGHT*dpi_scale, "Vulkan", nullptr, nullptr));
+	m_glfw_window = std::make_shared<GLFWwindow*>(glfwCreateWindow(WIDTH * dpi_scale, HEIGHT * dpi_scale, "Vulkan", nullptr, nullptr));
 
 	glfwSetWindowUserPointer(m_glfw_window.get()[0], this);
 	glfwSetFramebufferSizeCallback(m_glfw_window.get()[0], glfw_FramebufferResizeCallback);
-	glfwSetKeyCallback(m_glfw_window.get()[0], glfw_KeyCallback);
+	glfwSetWindowFocusCallback(m_glfw_window.get()[0], glfw_WindowFocusCallback);
 }
 
 void Application::glfw_FramebufferResizeCallback(GLFWwindow* window, int width, int height) {
@@ -27,25 +54,13 @@ void Application::glfw_FramebufferResizeCallback(GLFWwindow* window, int width, 
 	app->m_frame_controller->SetResized(true);
 }
 
-void Application::glfw_KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-	if (action != GLFW_PRESS) return;
-
-	switch(key){
-	case GLFW_KEY_ESCAPE:
-		glfwSetWindowShouldClose(window, GLFW_TRUE);
-		break;
-	default:
-		return;
+void Application::glfw_WindowFocusCallback(GLFWwindow* window, int focused) {
+	auto mode = glfwGetInputMode(window, GLFW_CURSOR);
+	if (mode != GLFW_CURSOR_HIDDEN) {
+		// The window gained input focus, hide the cursor without capturing it.
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 	}
-}
 
-void Application::PollMoveState(GLFWwindow* window) {
-	move_state.up = glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS;
-	move_state.down = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS;
-	move_state.left = glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS;
-	move_state.right = glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS;
-	move_state.forward = glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS;
-	move_state.back = glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS;
 }
 
 void Application::InitVulkan() {
@@ -73,19 +88,6 @@ void Application::InitVulkan() {
 	CreateColorResources(sample_count);
 	CreateDepthResources(sample_count);
 	CreateFramebuffers();
-
-	VkExtent2D extent = m_frame_controller->GetSwapchain()->GetExtent();
-	m_mesh_rasterizer = MeshRasterizer::Create(
-		m_allocator,
-		m_device, 
-		m_render_pass,
-		m_graphics_command_pool,
-		extent,
-		MAX_FRAMES_IN_FLIGHT);
-
-	m_gpu_profiler = GPUProfiler::Create(m_device, MAX_FRAMES_IN_FLIGHT);
-
-	m_camera = Camera::Create(45, ((float)extent.width/(float)extent.height), 0.1f, 10.0f);
 }
 
 void Application::InitImGui() {
@@ -117,26 +119,59 @@ void Application::InitImGui() {
 
 void Application::MainLoop() {
 	auto last_time = std::chrono::high_resolution_clock::now();
+
 	while (!glfwWindowShouldClose(m_glfw_window.get()[0])) {
 		auto current_time = std::chrono::high_resolution_clock::now();
 		float dt = std::chrono::duration<float, std::chrono::seconds::period>(current_time - last_time).count();
 		last_time = current_time;
 
-		move_state = { false, false, false, false, false, false };
-		glfwPollEvents();
-		PollMoveState(m_glfw_window.get()[0]);
+		auto input_query = Input::Poll();
+		ParseInputQuery(input_query);
 		MoveCamera(dt);
-		//if (move_state.up) std::cout << "UP ";
-		//if (move_state.down) std::cout << "DOWN ";
-		//if (move_state.left) std::cout << "LEFT ";
-		//if (move_state.right) std::cout << "RIGHT ";
-		//if (move_state.forward) std::cout << "FORWARD ";
-		//if (move_state.back) std::cout << "BACK ";
-		//std::cout << std::endl;
-		
+
 		DrawFrame();
 	}
 	vkDeviceWaitIdle(m_device->Get());
+}
+
+void Application::ParseInputQuery(InputQuery query)
+{
+	move_state = { false, false, false, false, false, false, 0.0, 0.0 };
+	for (auto i : query.actions) {
+		Action action = static_cast<Action>(i);
+
+		switch (action) {
+		case Action::QUIT:
+			//glfwSetWindowShouldClose(m_glfw_window.get()[0], GLFW_TRUE);
+			if (glfwGetInputMode(m_glfw_window.get()[0], GLFW_CURSOR) != GLFW_CURSOR_NORMAL) {
+				glfwSetInputMode(m_glfw_window.get()[0], GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+			}
+			break;
+		case Action::MOVE_UP:
+			move_state.up = true;
+			break;
+		case Action::MOVE_DOWN:
+			move_state.down = true;
+			break;
+		case Action::MOVE_LEFT:
+			move_state.left = true;
+			break;
+		case Action::MOVE_RIGHT:
+			move_state.right = true;
+			break;
+		case Action::MOVE_FORWARD:
+			move_state.forward = true;
+			break;
+		case Action::MOVE_BACKWARD:
+			move_state.back = true;
+			break;
+		default:
+			return;
+		}
+	}
+
+	move_state.dx = query.dx;
+	move_state.dy = query.dy;
 }
 
 void Application::Cleanup() {
@@ -166,9 +201,10 @@ void Application::DrawFrame() {
 	VWrap::CommandBuffer::CmdBeginRenderPass(command_buffer, m_render_pass, framebuffer);
 
 	// RECORD SCENE COMMANDS ------------------------------------------------
-	m_mesh_rasterizer->UpdateUniformBuffer(frame_index, m_camera);
-	m_mesh_rasterizer->CmdDraw(command_buffer, frame_index);
-	
+	//m_mesh_rasterizer->UpdateUniformBuffer(frame_index, m_camera);
+	//m_mesh_rasterizer->CmdDraw(command_buffer, frame_index);
+
+	m_octree_tracer->CmdDraw(command_buffer, frame_index, m_camera);
 
 	// END PROFILING ------------------------------------------------
 	m_gpu_profiler->CmdEnd(command_buffer, frame_index);
@@ -198,6 +234,7 @@ void Application::Resize() {
 
 	VkExtent2D extent = m_frame_controller->GetSwapchain()->GetExtent();
 	m_mesh_rasterizer->Resize(extent);
+	m_octree_tracer->Resize(extent);
 	m_camera = Camera::Create(45, ((float)extent.width / (float)extent.height), 0.1f, 10.0f);
 
 	float dpi_scale;
@@ -207,7 +244,7 @@ void Application::Resize() {
 
 void Application::CreateFramebuffers() {
 	m_framebuffers.resize(m_frame_controller->GetSwapchain()->Size());
-	for (uint32_t i = 0; i < m_frame_controller->GetSwapchain()->Size(); i++){
+	for (uint32_t i = 0; i < m_frame_controller->GetSwapchain()->Size(); i++) {
 		std::vector<std::shared_ptr<VWrap::ImageView>> attachments = {
 			m_color_image_view,
 			m_depth_image_view,
@@ -232,11 +269,11 @@ void Application::CreateDepthResources(VkSampleCountFlagBits samples)
 	info.mip_levels = 1;
 	info.samples = samples;
 
-	auto im = VWrap::Image::Create(m_allocator, info);
+	auto im = VWrap::Image::Create2D(m_allocator, info);
 	m_depth_image_view = VWrap::ImageView::Create(m_device, im, VK_IMAGE_ASPECT_DEPTH_BIT);
 }
 
-void Application::CreateColorResources(VkSampleCountFlagBits samples) 
+void Application::CreateColorResources(VkSampleCountFlagBits samples)
 {
 	VWrap::ImageCreateInfo info{};
 	info.format = m_frame_controller->GetSwapchain()->GetFormat();
@@ -248,13 +285,14 @@ void Application::CreateColorResources(VkSampleCountFlagBits samples)
 	info.tiling = VK_IMAGE_TILING_OPTIMAL;
 	info.samples = samples;
 
-	auto im = VWrap::Image::Create(m_allocator, info);
+	auto im = VWrap::Image::Create2D(m_allocator, info);
 	m_color_image_view = VWrap::ImageView::Create(m_device, im, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 
 void Application::MoveCamera(float dt) {
-	float speed = 2.0f;
+	float speed = 3.0f;
 	float distance = speed * dt;
+	double mouse_sensitivity = -0.003;
 
 	if (move_state.up && !move_state.down) m_camera->MoveUp(distance);
 	if (move_state.down && !move_state.up) m_camera->MoveUp(-distance);
@@ -262,4 +300,18 @@ void Application::MoveCamera(float dt) {
 	if (move_state.right && !move_state.left) m_camera->MoveRight(distance);
 	if (move_state.forward && !move_state.back) m_camera->MoveForward(distance);
 	if (move_state.back && !move_state.forward) m_camera->MoveForward(-distance);
+
+	double dx = move_state.dx;
+	double dy = move_state.dy;
+
+	dx *= mouse_sensitivity;
+	dy *= mouse_sensitivity;
+
+	auto start_vec = m_camera->GetForward();
+
+	auto x_rot = glm::rotate(glm::mat4(1.0f), (float)dx, m_camera->GetUp());
+	auto y_rot = glm::rotate(glm::mat4(1.0f), (float)dy, glm::cross(start_vec, m_camera->GetUp()));
+	auto final_vec = x_rot * y_rot * glm::vec4(m_camera->GetForward(), 1.0f);
+
+	m_camera->SetForward(glm::normalize(final_vec));
 }

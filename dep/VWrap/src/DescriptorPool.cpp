@@ -2,7 +2,7 @@
 
 namespace VWrap {
 
-	std::shared_ptr<DescriptorPool> DescriptorPool::Create(std::shared_ptr<Device> device, uint32_t max_sets) {
+	std::shared_ptr<DescriptorPool> DescriptorPool::CreateForRasterizer(std::shared_ptr<Device> device, uint32_t max_sets) {
 
         std::vector<VkDescriptorPoolSize> poolSizes(2);
         poolSizes[0].descriptorCount = max_sets;
@@ -12,6 +12,15 @@ namespace VWrap {
 
 		return Create(device, poolSizes, max_sets, 0);
 	}
+
+    std::shared_ptr<DescriptorPool> DescriptorPool::CreateForTracer(std::shared_ptr<Device> device, uint32_t max_sets)
+    {
+        std::vector<VkDescriptorPoolSize> poolSizes(1);
+        poolSizes[0].descriptorCount = max_sets;
+        poolSizes[0].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+
+        return Create(device, poolSizes, max_sets, 0);
+    }
 
     std::shared_ptr<DescriptorPool> DescriptorPool::Create(std::shared_ptr<Device> device, std::vector<VkDescriptorPoolSize> pool_sizes, uint32_t max_sets, VkDescriptorPoolCreateFlags flags)
     {

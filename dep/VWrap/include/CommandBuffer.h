@@ -65,7 +65,7 @@ namespace VWrap {
 		/// <summary>
 		/// Copies the data from the source buffer to this buffer
 		/// </summary>
-		static void CopyBufferToImage(std::shared_ptr<CommandPool> command_pool, std::shared_ptr<Buffer> src_buffer, std::shared_ptr<Image> dst_image, uint32_t width, uint32_t height);
+		static void CopyBufferToImage(std::shared_ptr<CommandPool> command_pool, std::shared_ptr<Buffer> src_buffer, std::shared_ptr<Image> dst_image, uint32_t width, uint32_t height, uint32_t depth);
 
 		/// <summary>
 		/// Builds the mipmaps for the given image.
@@ -82,6 +82,8 @@ namespace VWrap {
 		/// </summary>
 		static void TransitionLayout(std::shared_ptr<CommandPool> command_pool, std::shared_ptr<Image> image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout);
 
+		static void CreateAndFillBrickTexture(std::shared_ptr<CommandPool> command_pool, std::shared_ptr<Allocator> allocator, std::shared_ptr<Image>& dst_image, int brick_size);
+		
 		/// <summary>
 		/// Gets the underlying vulkan command buffer handle.
 		/// </summary>

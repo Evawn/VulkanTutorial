@@ -106,14 +106,14 @@ namespace VWrap {
 		info.properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 		info.mip_levels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
 
-		dst_image = Image::Create(allocator, info);
+		dst_image = Image::Create2D(allocator, info);
 
 		CommandBuffer::TransitionLayout(command_pool, dst_image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-		CommandBuffer::CopyBufferToImage(command_pool, staging_buffer, dst_image, texWidth, texHeight);
+		CommandBuffer::CopyBufferToImage(command_pool, staging_buffer, dst_image, texWidth, texHeight, 1);
 		CommandBuffer::GenerateMipmaps(command_pool, dst_image, texWidth, texHeight);
 	}
 
-	void CommandBuffer::CopyBufferToImage(std::shared_ptr<CommandPool> command_pool, std::shared_ptr<Buffer> src_buffer, std::shared_ptr<Image> dst_image, uint32_t width, uint32_t height) {
+	void CommandBuffer::CopyBufferToImage(std::shared_ptr<CommandPool> command_pool, std::shared_ptr<Buffer> src_buffer, std::shared_ptr<Image> dst_image, uint32_t width, uint32_t height, uint32_t depth = 1) {
 		auto command_buffer = VWrap::CommandBuffer::BeginSingleTimeCommands(command_pool);
 
 		VkBufferImageCopy copy{};
@@ -126,7 +126,7 @@ namespace VWrap {
 		copy.imageSubresource.mipLevel = 0;
 		copy.imageSubresource.baseArrayLayer = 0;
 		copy.imageSubresource.layerCount = 1;
-		copy.imageExtent = { width, height, 1 };
+		copy.imageExtent = { width, height, depth };
 
 		vkCmdCopyBufferToImage(command_buffer->Get(), src_buffer->Get(), dst_image->Get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
 		VWrap::CommandBuffer::EndSingleTimeCommands(command_buffer);
@@ -272,6 +272,13 @@ namespace VWrap {
 			sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		}
+		else if (old_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && new_layout == VK_IMAGE_LAYOUT_GENERAL) {
+			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+			sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		}
 		else if (old_layout == VK_IMAGE_LAYOUT_UNDEFINED && new_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
 			barrier.srcAccessMask = 0;
 			barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
@@ -304,5 +311,48 @@ namespace VWrap {
 			1, &barrier
 		);
 		VWrap::CommandBuffer::EndSingleTimeCommands(graphics_command_buffer);
+	}
+
+	void CommandBuffer::CreateAndFillBrickTexture(std::shared_ptr<CommandPool> command_pool, std::shared_ptr<Allocator> allocator, std::shared_ptr<Image>& dst_image, int brick_size)
+	{
+		int voxel_count = brick_size * brick_size * brick_size;
+		VkDeviceSize imageSize = voxel_count * 4;
+
+		auto staging_buffer = Buffer::CreateStaging(allocator, imageSize);
+
+		// generate brick content
+		std::vector<int> voxels(voxel_count);
+		for (int i = 0; i < voxel_count; i++) {
+			int x = i % brick_size;
+			int y = (i / brick_size) % brick_size;
+			int z = i / (brick_size * brick_size);
+			glm::vec3 pos = glm::vec3(x, y, z);
+			auto dist = glm::distance(pos, glm::vec3(brick_size / 2.0f));
+			if(dist < brick_size/4.0f) 				
+				voxels[i] = 1;
+			else
+				voxels[i] = 0;
+		}
+
+		void* data;
+		vmaMapMemory(allocator->Get(), staging_buffer->GetAllocation(), &data);
+		memcpy(data, voxels.data(), static_cast<size_t>(imageSize));
+		vmaUnmapMemory(allocator->Get(), staging_buffer->GetAllocation());
+
+		VWrap::ImageCreateInfo info{};
+		info.width = static_cast<uint32_t>(brick_size);
+		info.height = static_cast<uint32_t>(brick_size);
+		info.depth = static_cast<uint32_t>(brick_size);
+		info.format = VK_FORMAT_R8G8B8A8_UNORM;
+		info.tiling = VK_IMAGE_TILING_OPTIMAL;
+		info.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+		info.properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		info.mip_levels = 1;
+
+		dst_image = Image::Create3D(allocator, info);
+
+		CommandBuffer::TransitionLayout(command_pool, dst_image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		CommandBuffer::CopyBufferToImage(command_pool, staging_buffer, dst_image, brick_size, brick_size, brick_size);
+		CommandBuffer::TransitionLayout(command_pool, dst_image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL);
 	}
 }

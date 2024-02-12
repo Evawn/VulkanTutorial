@@ -29,9 +29,9 @@ public:
 
 	static std::shared_ptr<Camera> Create(float fovy, float aspect, float znear, float zfar) {
 		auto ret = std::make_shared<Camera>();
-		ret->m_position = glm::vec3(0.0f, -3.0f, 0.0f);
+		ret->m_position = glm::vec3(3.0f, 3.0f, 3.0f);
 		ret->m_up = glm::vec3(0.0f, 0.0f, 1.0f);
-		ret->m_forward = glm::vec3(0.0f, 1.0f, 0.0f);
+		ret->m_forward = glm::vec3(-1.0f, -1.0f, -1.0f);
 		ret->m_fovy = fovy;
 		ret->m_aspect = aspect;
 		ret->m_znear = znear;
@@ -49,8 +49,12 @@ public:
 		return mat;
 	}
 
-	void SetPosition(glm::vec3 pos) {
-		m_position = pos;
+	glm::mat4 GetNDCtoWorldMatrix() {
+		return glm::inverse(GetProjectionMatrix() * GetViewMatrix());
+	}
+
+	glm::vec3 GetPosition() {
+		return m_position;
 	}
 
 	void SetForward(glm::vec3 forward) {
@@ -79,6 +83,11 @@ public:
 		m_position += glm::normalize(m_up) * distance;
 	}
 
+	glm::vec3 GetUp() {
+		return m_up;
+	}
 
+glm::vec3 GetForward() {
+		return m_forward;
+	}
 };
-

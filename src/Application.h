@@ -37,6 +37,8 @@
 #include "GUIRenderer.h"
 #include "GPUProfiler.h"
 #include "Camera.h"
+#include "Input.h"
+#include "OctreeTracer.h"
 
 // STD INCLUDES ----------------------------------------------------------------------------------------------
 #include <iostream>
@@ -73,6 +75,12 @@ const bool ENABLE_VALIDATION_LAYERS = false;
 const bool ENABLE_VALIDATION_LAYERS = true;
 #endif
 
+enum class Action {
+	QUIT, MOVE_FORWARD, MOVE_BACKWARD, MOVE_LEFT, MOVE_RIGHT, MOVE_UP, MOVE_DOWN
+};
+
+
+
 static void check_vk_result(VkResult err)
 {
 	if (err == 0)
@@ -82,11 +90,12 @@ static void check_vk_result(VkResult err)
 		abort();
 }
 
-static struct MoveState {
+static struct CameraMoveState {
 	bool up, down, left, right, forward, back = false;
+	double dx, dy = 0.0;
 };
 
-static MoveState move_state{ false, false, false, false, false, false };
+static CameraMoveState move_state{ false, false, false, false, false, false };
 
 /// <summary>
 /// This class is the main application class. It contains all the vulkan objects
@@ -142,6 +151,23 @@ private:
 	/// </summary>
 	std::shared_ptr<Camera> m_camera;
 
+	std::shared_ptr<OctreeTracer> m_octree_tracer;
+
+	Context m_main_context = {
+		"Main",
+		{
+			{{GLFW_KEY_ESCAPE, KeyState::PRESSED}, (int)Action::QUIT},
+			{{GLFW_KEY_W, KeyState::DOWN}, (int)Action::MOVE_FORWARD},
+			{{GLFW_KEY_S, KeyState::DOWN}, (int)Action::MOVE_BACKWARD},
+			{{GLFW_KEY_A, KeyState::DOWN}, (int)Action::MOVE_LEFT},
+			{{GLFW_KEY_D, KeyState::DOWN}, (int)Action::MOVE_RIGHT},
+			{{GLFW_KEY_SPACE, KeyState::DOWN}, (int)Action::MOVE_UP},
+			{{GLFW_KEY_LEFT_SHIFT, KeyState::DOWN}, (int)Action::MOVE_DOWN}
+		}
+	};
+
+	//std::shared_ptr<Input<Action>> m_input;
+
 	// CLASS FUNCTIONS -------------------------------------------------------------------------------------------
 public:
 
@@ -156,11 +182,11 @@ private:
 	/// </summary>
 	static void glfw_FramebufferResizeCallback(GLFWwindow* window, int width, int height);
 
-	static void glfw_KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-
-	static void PollMoveState(GLFWwindow* window);
+	static void glfw_WindowFocusCallback(GLFWwindow* window, int focused);
 
 	void MoveCamera(float dt);
+
+	void Init();
 
 	/// <summary>
 	/// Initializes the window and sets references in GLFW to the app and resize callback.
@@ -181,6 +207,8 @@ private:
 	/// Contains the main loop of the application, which polls for events and draws frames.
 	/// </summary>
 	void MainLoop();
+
+	void ParseInputQuery(InputQuery actions);
 
 	/// <summary>
 	/// Cleans up any resources that need to be explicitly destroyed.

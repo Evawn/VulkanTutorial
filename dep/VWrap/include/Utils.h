@@ -152,6 +152,11 @@ namespace VWrap {
 			VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
 		);
 	}
+
+	struct PushConstantBlock {
+		glm::mat4 NDCtoWorld;
+		glm::vec3 cameraPos;
+	};
 }
 
 namespace std {

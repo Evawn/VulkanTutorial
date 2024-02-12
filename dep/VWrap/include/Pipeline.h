@@ -34,7 +34,12 @@ namespace VWrap {
 		/// <summary>
 		/// Creates a new pipeline with the given render pass, descriptor set layout and extent.
 		/// </summary>
-		static std::shared_ptr<Pipeline> Create(std::shared_ptr<Device> device, std::shared_ptr<RenderPass> render_pass, std::shared_ptr<DescriptorSetLayout> descriptor_set_layout, VkExtent2D extent);;
+		static std::shared_ptr<Pipeline> CreateRasterizer(std::shared_ptr<Device> device, std::shared_ptr<RenderPass> render_pass, std::shared_ptr<DescriptorSetLayout> descriptor_set_layout, VkExtent2D extent);;
+
+		/// <summary>
+		/// Creates a new pipeline with the given render pass, descriptor set layout and extent.
+		/// </summary>
+		static std::shared_ptr<Pipeline> CreateTracer(std::shared_ptr<Device> device, std::shared_ptr<RenderPass> render_pass, std::shared_ptr<DescriptorSetLayout> descriptor_set_layout, VkExtent2D extent);;
 
 		/// <summary> Gets the pipeline handle. </summary>
 		VkPipeline Get() const { return m_pipeline; }

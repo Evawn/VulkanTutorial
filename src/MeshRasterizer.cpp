@@ -136,15 +136,15 @@ std::shared_ptr<MeshRasterizer> MeshRasterizer::Create(std::shared_ptr<VWrap::Al
 	ret->m_extent = extent;
 	ret->m_graphics_pool = graphics_pool;
 
-	ret->m_descriptor_set_layout = VWrap::DescriptorSetLayout::Create(device);
-	ret->m_pipeline = VWrap::Pipeline::Create(device, render_pass, ret->m_descriptor_set_layout, extent);
+	ret->m_descriptor_set_layout = VWrap::DescriptorSetLayout::CreateForMeshRasterizer(device);
+	ret->m_pipeline = VWrap::Pipeline::CreateRasterizer(device, render_pass, ret->m_descriptor_set_layout, extent);
 	ret->m_sampler = VWrap::Sampler::Create(device);
 
 	VWrap::CommandBuffer::UploadTextureToImage(graphics_pool, allocator, ret->m_texture_image, TEXTURE_PATH.c_str());
 	ret->m_texture_image_view = VWrap::ImageView::Create(device, ret->m_texture_image);
 
 
-	ret->m_descriptor_pool = VWrap::DescriptorPool::Create(device, num_frames);
+	ret->m_descriptor_pool = VWrap::DescriptorPool::CreateForRasterizer(device, num_frames);
 	std::vector<std::shared_ptr<VWrap::DescriptorSetLayout>> layouts(static_cast<size_t>(num_frames), ret->m_descriptor_set_layout);
 	ret->m_descriptor_sets = VWrap::DescriptorSet::CreateMany(ret->m_descriptor_pool, layouts);
 
@@ -195,7 +195,8 @@ void MeshRasterizer::UpdateUniformBuffer(uint32_t frame, std::shared_ptr<Camera>
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
 	UniformBufferObject ubo{};
-	ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	//ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.model = glm::mat4(1.0f);
 	ubo.view = camera->GetViewMatrix();
 	ubo.proj = camera->GetProjectionMatrix();
 

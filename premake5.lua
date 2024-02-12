@@ -10,9 +10,12 @@ project "VulkanTutorial"
    cppdialect "C++20" 
    location "Solution"
 
-   files { "src/*", "dep/VWrap/src/*.cpp", 
-                    "dep/VWrap/include/*.h",
-                  "dep/imgui/**.cpp"}
+   files { "src/*", 
+            "dep/VWrap/src/*.cpp", 
+            "dep/VWrap/include/*.h",
+            "dep/imgui/**.cpp",
+            "shaders/*"
+         }
 
    includedirs {"dep", 
     "dep/VWrap/include",
