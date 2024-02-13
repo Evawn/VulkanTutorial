@@ -58,8 +58,8 @@
 /// <summary>
 /// The width and height of the viewport. (In screen coordinates.)
 /// </summary>
-const uint32_t WIDTH = 800;
-const uint32_t HEIGHT = 600;
+const uint32_t WIDTH = 1200;
+const uint32_t HEIGHT = 900;
 
 /// <summary>
 /// The maximum number of frames that can be in flight at once.
@@ -76,7 +76,7 @@ const bool ENABLE_VALIDATION_LAYERS = true;
 #endif
 
 enum class Action {
-	QUIT, MOVE_FORWARD, MOVE_BACKWARD, MOVE_LEFT, MOVE_RIGHT, MOVE_UP, MOVE_DOWN
+	ESCAPE, MOVE_FORWARD, MOVE_BACKWARD, MOVE_LEFT, MOVE_RIGHT, MOVE_UP, MOVE_DOWN
 };
 
 
@@ -156,7 +156,7 @@ private:
 	Context m_main_context = {
 		"Main",
 		{
-			{{GLFW_KEY_ESCAPE, KeyState::PRESSED}, (int)Action::QUIT},
+			{{GLFW_KEY_ESCAPE, KeyState::PRESSED}, (int)Action::ESCAPE},
 			{{GLFW_KEY_W, KeyState::DOWN}, (int)Action::MOVE_FORWARD},
 			{{GLFW_KEY_S, KeyState::DOWN}, (int)Action::MOVE_BACKWARD},
 			{{GLFW_KEY_A, KeyState::DOWN}, (int)Action::MOVE_LEFT},
@@ -165,6 +165,13 @@ private:
 			{{GLFW_KEY_LEFT_SHIFT, KeyState::DOWN}, (int)Action::MOVE_DOWN}
 		}
 	};
+
+	struct AppState {
+		bool focused = true;
+		float sensitivity = 0.5f;
+		float speed = 5.0f;
+	};
+	AppState m_app_state;
 
 	//std::shared_ptr<Input<Action>> m_input;
 

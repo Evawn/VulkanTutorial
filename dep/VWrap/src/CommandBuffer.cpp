@@ -322,6 +322,8 @@ namespace VWrap {
 
 		// generate brick content
 		std::vector<int> voxels(voxel_count);
+
+		// sphere
 		for (int i = 0; i < voxel_count; i++) {
 			int x = i % brick_size;
 			int y = (i / brick_size) % brick_size;
@@ -333,6 +335,21 @@ namespace VWrap {
 			else
 				voxels[i] = 0;
 		}
+
+		// frame
+		//for (int i = 0; i < voxel_count; i++) {
+
+		//	int x = i % brick_size;
+		//	int y = (i / brick_size) % brick_size;
+		//	int z = i / (brick_size * brick_size);
+		//	
+		//	int sum = 0;
+		//	if (x == 0 || x == brick_size - 1) sum++;
+		//	if (y == 0 || y == brick_size - 1) sum++;
+		//	if (z == 0 || z == brick_size - 1) sum++;
+		//	if (sum >= 2) voxels[i] = 1;
+		//	else voxels[i] = 0;
+		//}
 
 		void* data;
 		vmaMapMemory(allocator->Get(), staging_buffer->GetAllocation(), &data);

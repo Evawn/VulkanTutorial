@@ -21,10 +21,8 @@ std::shared_ptr<GUIRenderer> GUIRenderer::Create(std::shared_ptr<VWrap::Device> 
 	return ret;
 }
 
-void GUIRenderer::CmdDraw(std::shared_ptr<VWrap::CommandBuffer> command_buffer, float time, float fps) {
-	ImGui_ImplVulkan_NewFrame();
-	ImGui_ImplGlfw_NewFrame();
-	ImGui::NewFrame();
+void GUIRenderer::CmdDraw(std::shared_ptr<VWrap::CommandBuffer> command_buffer, float time, float fps, float& sensitivity, float& speed) {
+
 	//ImGui::ShowDemoWindow();
 	// Variables to manage simulation state and render time
 	bool isSimulationPaused = false;
@@ -51,6 +49,13 @@ void GUIRenderer::CmdDraw(std::shared_ptr<VWrap::CommandBuffer> command_buffer, 
 		// Additional code to resume the simulation
 	}
 
+	// Slider for mouse sensitivity
+	ImGui::SliderFloat("Mouse Sensitivity", &sensitivity, 0.01f, 2.0f, "%.3f");
+
+	// Slider for movement speed
+	ImGui::SliderFloat("Movement Speed", &speed, 0.1f, 10.0f, "%.3f");
+
+
 	// End the ImGUI window
 	ImGui::End();
 	ImGui::EndFrame();
@@ -59,4 +64,11 @@ void GUIRenderer::CmdDraw(std::shared_ptr<VWrap::CommandBuffer> command_buffer, 
 	ImDrawData* draw_data = ImGui::GetDrawData();
 
 	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), command_buffer->Get());
+}
+
+void GUIRenderer::BeginFrame()
+{
+	ImGui_ImplVulkan_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
 }

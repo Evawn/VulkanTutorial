@@ -31,7 +31,7 @@ public:
 		auto ret = std::make_shared<Camera>();
 		ret->m_position = glm::vec3(3.0f, 3.0f, 3.0f);
 		ret->m_up = glm::vec3(0.0f, 0.0f, 1.0f);
-		ret->m_forward = glm::vec3(-1.0f, -1.0f, -1.0f);
+		ret->m_forward = glm::normalize(glm::vec3(-1.0f, -1.0f, -1.0f));
 		ret->m_fovy = fovy;
 		ret->m_aspect = aspect;
 		ret->m_znear = znear;
@@ -58,7 +58,7 @@ public:
 	}
 
 	void SetForward(glm::vec3 forward) {
-		m_forward = forward;
+		m_forward = glm::normalize(forward);
 	}
 
 	/// <summary>

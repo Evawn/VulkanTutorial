@@ -12,6 +12,7 @@ void Input::Init(GLFWwindow* window) {
 	contexts = std::vector<Context>();
 
 	glfwSetKeyCallback(window, KeyCallback);
+	Poll();
 }
 
 InputQuery Input::Poll() {
@@ -57,8 +58,14 @@ InputQuery Input::Poll() {
 	// Process mouse
 	double x, y;
 	glfwGetCursorPos(window, &x, &y);
-	double dx = x - last_query.x;
-	double dy = y - last_query.y;
+
+	int win_x, win_y;
+	glfwGetWindowPos(window, &win_x, &win_y);
+	int win_width, win_height;
+	glfwGetWindowSize(window, &win_width, &win_height);
+
+	double dx = x - (win_x );
+	double dy = y - (win_y );
 
 	last_query = { actions, x, y, dx , dy };
 

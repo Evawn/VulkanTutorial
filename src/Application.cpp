@@ -32,7 +32,12 @@ void Application::Init() {
 	m_camera = Camera::Create(45, ((float)extent.width / (float)extent.height), 0.1f, 10.0f);
 
 	Input::Init(m_glfw_window.get()[0]);
-	Input::AddContext(m_main_context);
+	Input::AddContext(m_main_context); // :3c
+
+	int x, y;
+	glfwGetWindowPos(m_glfw_window.get()[0], &x, &y);
+	glfwSetCursorPos(m_glfw_window.get()[0], x, y);
+	ImGui::SetMouseCursor(ImGuiMouseCursor_None);
 }
 
 void Application::InitWindow() {
@@ -47,6 +52,15 @@ void Application::InitWindow() {
 	glfwSetWindowUserPointer(m_glfw_window.get()[0], this);
 	glfwSetFramebufferSizeCallback(m_glfw_window.get()[0], glfw_FramebufferResizeCallback);
 	glfwSetWindowFocusCallback(m_glfw_window.get()[0], glfw_WindowFocusCallback);
+
+	// Defining a monitor
+	GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+	const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+	int screen_width = mode->width;
+	int screen_height = mode->height;
+
+	// Putting it in the centre
+	glfwSetWindowPos(m_glfw_window.get()[0], (screen_width-WIDTH) / 2, (screen_height - HEIGHT) / 2);
 }
 
 void Application::glfw_FramebufferResizeCallback(GLFWwindow* window, int width, int height) {
@@ -55,11 +69,11 @@ void Application::glfw_FramebufferResizeCallback(GLFWwindow* window, int width, 
 }
 
 void Application::glfw_WindowFocusCallback(GLFWwindow* window, int focused) {
-	auto mode = glfwGetInputMode(window, GLFW_CURSOR);
-	if (mode != GLFW_CURSOR_HIDDEN) {
-		// The window gained input focus, hide the cursor without capturing it.
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-	}
+	//auto mode = glfwGetInputMode(window, GLFW_CURSOR);
+	//if (mode != GLFW_CURSOR_HIDDEN) {
+	//	// The window gained input focus, hide the cursor without capturing it.
+	//	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+	//}
 
 }
 
@@ -127,8 +141,21 @@ void Application::MainLoop() {
 
 		auto input_query = Input::Poll();
 		ParseInputQuery(input_query);
-		MoveCamera(dt);
+		
+		if(m_app_state.focused) {
+			int x, y;
+			glfwGetWindowPos(m_glfw_window.get()[0], &x, &y);
+			glfwSetCursorPos(m_glfw_window.get()[0], x, y);
+			ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+			MoveCamera(dt);
+			
+		} else {
+			
+			ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
+		}
 
+
+		m_gui_renderer->BeginFrame();
 		DrawFrame();
 	}
 	vkDeviceWaitIdle(m_device->Get());
@@ -137,15 +164,18 @@ void Application::MainLoop() {
 void Application::ParseInputQuery(InputQuery query)
 {
 	move_state = { false, false, false, false, false, false, 0.0, 0.0 };
+	move_state.dx = query.dx;
+	move_state.dy = query.dy;
+
 	for (auto i : query.actions) {
 		Action action = static_cast<Action>(i);
 
+		int mode = -1;
 		switch (action) {
-		case Action::QUIT:
-			//glfwSetWindowShouldClose(m_glfw_window.get()[0], GLFW_TRUE);
-			if (glfwGetInputMode(m_glfw_window.get()[0], GLFW_CURSOR) != GLFW_CURSOR_NORMAL) {
-				glfwSetInputMode(m_glfw_window.get()[0], GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-			}
+		case Action::ESCAPE:
+			m_app_state.focused = !m_app_state.focused;
+			move_state.dx = 0;
+			move_state.dy = 0;
 			break;
 		case Action::MOVE_UP:
 			move_state.up = true;
@@ -169,9 +199,6 @@ void Application::ParseInputQuery(InputQuery query)
 			return;
 		}
 	}
-
-	move_state.dx = query.dx;
-	move_state.dy = query.dy;
 }
 
 void Application::Cleanup() {
@@ -214,7 +241,7 @@ void Application::DrawFrame() {
 
 	// RECORD GUI COMMANDS ------------------------------------------------
 	GPUProfiler::PerformanceMetrics metrics = m_gpu_profiler->GetMetrics(frame_index);
-	m_gui_renderer->CmdDraw(command_buffer, metrics.render_time, metrics.fps);
+	m_gui_renderer->CmdDraw(command_buffer, metrics.render_time, metrics.fps, m_app_state.sensitivity, m_app_state.speed);
 
 	// END RENDER PASS - TODO: ABSTRACT ------------------------------------------------
 	vkCmdEndRenderPass(command_buffer->Get());
@@ -290,9 +317,8 @@ void Application::CreateColorResources(VkSampleCountFlagBits samples)
 }
 
 void Application::MoveCamera(float dt) {
-	float speed = 3.0f;
-	float distance = speed * dt;
-	double mouse_sensitivity = -0.003;
+	float distance = m_app_state.speed * dt;
+	double mouse_sensitivity = (float)(-m_app_state.sensitivity/100.0);
 
 	if (move_state.up && !move_state.down) m_camera->MoveUp(distance);
 	if (move_state.down && !move_state.up) m_camera->MoveUp(-distance);
@@ -307,11 +333,20 @@ void Application::MoveCamera(float dt) {
 	dx *= mouse_sensitivity;
 	dy *= mouse_sensitivity;
 
-	auto start_vec = m_camera->GetForward();
+	auto forward = m_camera->GetForward();
+	auto up = m_camera->GetUp();
 
-	auto x_rot = glm::rotate(glm::mat4(1.0f), (float)dx, m_camera->GetUp());
-	auto y_rot = glm::rotate(glm::mat4(1.0f), (float)dy, glm::cross(start_vec, m_camera->GetUp()));
-	auto final_vec = x_rot * y_rot * glm::vec4(m_camera->GetForward(), 1.0f);
+	auto dot = glm::dot(forward, up);
+	dot = glm::clamp(dot, -1.0f, 1.0f);
+	auto angle = glm::acos(dot);
+
+	//if(angle - dy < 0.001f) dy = 0.001f - angle;
+	//else if(angle - dy > glm::pi<float>() - 0.001f) dy = glm::pi<float>() - 0.001f - angle;
+	if (angle - dy < 0.001f || angle - dy > glm::pi<float>() - 0.001f) dy = 0.0f;
+
+	auto x_rot = glm::rotate(glm::mat4(1.0f), (float)dx, up);
+	auto y_rot = glm::rotate(glm::mat4(1.0f), (float)dy, glm::cross(forward, up));
+	auto final_vec = x_rot * y_rot * glm::vec4(forward, 1.0f);
 
 	m_camera->SetForward(glm::normalize(final_vec));
 }

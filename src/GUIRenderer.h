@@ -36,7 +36,9 @@ public:
 	/// <summary>
 	/// Records to the command buffer ImGui draw commands.
 	/// </summary>
-	void CmdDraw(std::shared_ptr<VWrap::CommandBuffer> command_buffer, float time= -1.0f, float fps = -1.0f);
+	void CmdDraw(std::shared_ptr<VWrap::CommandBuffer> command_buffer, float time, float fps, float& sensitivity, float& speed);
+
+	void BeginFrame();
 
 	/// <summary>
 	/// Returns descriptor pool for ImGui.
