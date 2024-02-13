@@ -2,6 +2,7 @@
 #include <unordered_map>
 #include <utility>
 #include <GLFW/glfw3.h>
+#include <imgui.h>
 #include <memory>
 #include <vector>
 #include <string>
@@ -21,6 +22,7 @@ public:
 struct InputQuery {
 	std::vector<int> actions;
 	double x, y, dx, dy;
+	bool center_mouse, hide_mouse;
 };
 
 class Input
@@ -46,4 +48,17 @@ public:
 	}
 
 	static InputQuery Poll();
+
+	static void HideCursor(bool b) {
+		last_query.hide_mouse = b;
+	}
+
+	static void CenterCursor(bool b) {
+		last_query.center_mouse = b;
+		if(b) {
+			int w, h;
+			glfwGetWindowSize(window, &w, &h);
+			glfwSetCursorPos(window, w / 2, h / 2);
+		}
+	}
 };

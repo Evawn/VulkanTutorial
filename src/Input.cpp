@@ -54,20 +54,37 @@ InputQuery Input::Poll() {
 			}
 		}
 	}
+	last_query.actions = actions;
 
 	// Process mouse
-	double x, y;
+	double x, y, dx, dy;
 	glfwGetCursorPos(window, &x, &y);
+	
 
-	int win_x, win_y;
-	glfwGetWindowPos(window, &win_x, &win_y);
-	int win_width, win_height;
-	glfwGetWindowSize(window, &win_width, &win_height);
+	if (last_query.center_mouse) {
+		/*int win_x, win_y;
+		glfwGetWindowPos(window, &win_x, &win_y);*/
+		int win_width, win_height;
+		glfwGetWindowSize(window, &win_width, &win_height);
+		double center_x = win_width / 2;
+		double center_y = win_height / 2;
 
-	double dx = x - (win_x );
-	double dy = y - (win_y );
+		dx = x - center_x;
+		dy = y - center_y;
+		x = center_x;
+		y = center_y;
 
-	last_query = { actions, x, y, dx , dy };
+		glfwSetCursorPos(window, x, y);
+	}
+	else {
+		dx = x - last_query.x;
+		dy = y - last_query.y;
+	}
+
+	last_query.x = x;
+	last_query.y = y;
+	last_query.dx = dx;
+	last_query.dy = dy;
 
 	return last_query;
 }

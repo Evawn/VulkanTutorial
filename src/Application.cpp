@@ -33,11 +33,7 @@ void Application::Init() {
 
 	Input::Init(m_glfw_window.get()[0]);
 	Input::AddContext(m_main_context); // :3c
-
-	int x, y;
-	glfwGetWindowPos(m_glfw_window.get()[0], &x, &y);
-	glfwSetCursorPos(m_glfw_window.get()[0], x, y);
-	ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+	
 }
 
 void Application::InitWindow() {
@@ -129,6 +125,7 @@ void Application::InitImGui() {
 	float dpi_scale;
 	glfwGetWindowContentScale(m_glfw_window.get()[0], &dpi_scale, nullptr);
 	m_gui_renderer->SetDpiScale(dpi_scale);
+	ImGui::SetMouseCursor(ImGuiMouseCursor_None);
 }
 
 void Application::MainLoop() {
@@ -143,9 +140,7 @@ void Application::MainLoop() {
 		ParseInputQuery(input_query);
 		
 		if(m_app_state.focused) {
-			int x, y;
-			glfwGetWindowPos(m_glfw_window.get()[0], &x, &y);
-			glfwSetCursorPos(m_glfw_window.get()[0], x, y);
+			
 			ImGui::SetMouseCursor(ImGuiMouseCursor_None);
 			MoveCamera(dt);
 			
@@ -176,6 +171,8 @@ void Application::ParseInputQuery(InputQuery query)
 			m_app_state.focused = !m_app_state.focused;
 			move_state.dx = 0;
 			move_state.dy = 0;
+			Input::HideCursor(m_app_state.focused);
+			Input::CenterCursor(m_app_state.focused);
 			break;
 		case Action::MOVE_UP:
 			move_state.up = true;
