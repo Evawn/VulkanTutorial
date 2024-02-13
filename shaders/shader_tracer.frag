@@ -7,7 +7,7 @@ layout(push_constant) uniform PushConstantBlock {
 	vec3 cameraPos;
 } pushConstantBlock;
 
-layout(binding = 0, rgba32f) uniform readonly image3D brick;
+layout(binding = 0) uniform sampler3D brick_sampler;
 
 layout(location = 0) out vec4 outColor;
 
@@ -72,7 +72,7 @@ void main() {
                 return;
 			}
 
-            vec4 voxel = imageLoad(brick, voxel_coord);
+            vec4 voxel = texelFetch(brick_sampler, voxel_coord, 0);
             if(voxel != vec4(0.0)){
                 outColor = vec4(vec3(1.0)-vec3(step_direction)*0.1, 1.0)  - vec4(vec3(i / 250.0), 0.0);
 				return;

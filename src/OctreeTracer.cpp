@@ -27,10 +27,10 @@ void OctreeTracer::UpdateDescriptorSets()
 {
 	for (size_t i = 0; i < m_descriptor_sets.size(); i++) {
 
-		VkDescriptorImageInfo imageInfo{};
-		imageInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-		imageInfo.imageView = m_brick_texture_view->Get();
-		//imageInfo.sampler = m_sampler->Get();
+		VkDescriptorImageInfo image_info{};
+		image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		image_info.imageView = m_brick_texture_view->Get();
+		image_info.sampler = m_sampler->Get();
 
 		// array of descriptor writes:
 		std::array<VkWriteDescriptorSet, 1> descriptorWrites{};
@@ -40,8 +40,8 @@ void OctreeTracer::UpdateDescriptorSets()
 		descriptorWrites[0].dstBinding = 0;
 		descriptorWrites[0].dstSet = m_descriptor_sets[i]->Get();
 		descriptorWrites[0].dstArrayElement = 0;
-		descriptorWrites[0].pImageInfo = &imageInfo;
-		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+		descriptorWrites[0].pImageInfo = &image_info;
+		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 
 		vkUpdateDescriptorSets(m_device->Get(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 	}

@@ -17,7 +17,7 @@ namespace VWrap {
     {
         std::vector<VkDescriptorPoolSize> poolSizes(1);
         poolSizes[0].descriptorCount = max_sets;
-        poolSizes[0].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+        poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 
         return Create(device, poolSizes, max_sets, 0);
     }

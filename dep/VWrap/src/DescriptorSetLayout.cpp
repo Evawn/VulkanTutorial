@@ -38,15 +38,16 @@ namespace VWrap {
         auto ret = std::make_shared<DescriptorSetLayout>();
         ret->m_device = device;
 
-        VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-        samplerLayoutBinding.binding = 0;
-        samplerLayoutBinding.descriptorCount = 1;
-        samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-        samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-        samplerLayoutBinding.pImmutableSamplers = nullptr; // Optional - relevant for image sampling descriptors
+        VkDescriptorSetLayoutBinding sampled_image_binding{};
+        sampled_image_binding.binding = 0;
+        sampled_image_binding.descriptorCount = 1;
+        sampled_image_binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        sampled_image_binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+        //sampled_image_binding.pImmutableSamplers = nullptr; // Optional - relevant for image sampling descriptors
 
 
-        std::array<VkDescriptorSetLayoutBinding, 1> bindings = { samplerLayoutBinding };
+
+        std::array<VkDescriptorSetLayoutBinding, 1> bindings = { sampled_image_binding};
         VkDescriptorSetLayoutCreateInfo layoutInfo{};
         layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
         layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());

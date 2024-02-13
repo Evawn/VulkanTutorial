@@ -362,7 +362,7 @@ namespace VWrap {
 		info.depth = static_cast<uint32_t>(brick_size);
 		info.format = VK_FORMAT_R8G8B8A8_UNORM;
 		info.tiling = VK_IMAGE_TILING_OPTIMAL;
-		info.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+		info.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 		info.properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 		info.mip_levels = 1;
 
@@ -370,6 +370,6 @@ namespace VWrap {
 
 		CommandBuffer::TransitionLayout(command_pool, dst_image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 		CommandBuffer::CopyBufferToImage(command_pool, staging_buffer, dst_image, brick_size, brick_size, brick_size);
-		CommandBuffer::TransitionLayout(command_pool, dst_image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL);
+		CommandBuffer::TransitionLayout(command_pool, dst_image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
 }
