@@ -54,8 +54,6 @@ namespace VWrap {
 			VkMemoryPropertyFlags properties,
 			void*& data);
 
-
-
 		/// <summary>
 		/// Gets the underlying buffer handle.
 		/// </summary>
@@ -68,5 +66,4 @@ namespace VWrap {
 		/// </summary>
 		~Buffer();
 	};
-
 }

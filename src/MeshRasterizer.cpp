@@ -16,7 +16,10 @@ inline void MeshRasterizer::CreateVertexBuffer() {
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 		0);
 
-	VWrap::CommandBuffer::CopyBuffer(m_graphics_pool, staging_buffer, m_vertex_buffer, bufferSize);
+	auto command_buffer = VWrap::CommandBuffer::Create(m_graphics_pool);
+	command_buffer->BeginSingle();
+	command_buffer->CmdCopyBuffer(staging_buffer, m_vertex_buffer, bufferSize);
+	command_buffer->EndAndSubmit();
 }
 
 inline void MeshRasterizer::CreateIndexBuffer() {
@@ -35,7 +38,10 @@ inline void MeshRasterizer::CreateIndexBuffer() {
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 		0);
 
-	VWrap::CommandBuffer::CopyBuffer(m_graphics_pool, staging_buffer, m_index_buffer, bufferSize);
+	auto command_buffer = VWrap::CommandBuffer::Create(m_graphics_pool);
+	command_buffer->BeginSingle();
+	command_buffer->CmdCopyBuffer(staging_buffer, m_index_buffer, bufferSize);
+	command_buffer->EndAndSubmit();
 }
 
 inline void MeshRasterizer::CreateUniformBuffers() {
@@ -55,7 +61,7 @@ inline void MeshRasterizer::CreateUniformBuffers() {
 	}
 }
 
-inline void MeshRasterizer::UpdateDescriptorSets() {
+inline void MeshRasterizer::WriteDescriptors() {
 	for (size_t i = 0; i < m_descriptor_sets.size(); i++) {
 		VkDescriptorBufferInfo bufferInfo{};
 		bufferInfo.buffer = m_uniform_buffers[i]->Get();
@@ -136,26 +142,121 @@ std::shared_ptr<MeshRasterizer> MeshRasterizer::Create(std::shared_ptr<VWrap::Al
 	ret->m_extent = extent;
 	ret->m_graphics_pool = graphics_pool;
 
-	ret->m_descriptor_set_layout = VWrap::DescriptorSetLayout::CreateForMeshRasterizer(device);
-	ret->m_pipeline = VWrap::Pipeline::CreateRasterizer(device, render_pass, ret->m_descriptor_set_layout, extent);
+	ret->CreateDescriptors(num_frames);
+	ret->CreatePipeline(render_pass);
 	ret->m_sampler = VWrap::Sampler::Create(device);
 
 	VWrap::CommandBuffer::UploadTextureToImage(graphics_pool, allocator, ret->m_texture_image, TEXTURE_PATH.c_str());
 	ret->m_texture_image_view = VWrap::ImageView::Create(device, ret->m_texture_image);
-
-
-	ret->m_descriptor_pool = VWrap::DescriptorPool::CreateForRasterizer(device, num_frames);
-	std::vector<std::shared_ptr<VWrap::DescriptorSetLayout>> layouts(static_cast<size_t>(num_frames), ret->m_descriptor_set_layout);
-	ret->m_descriptor_sets = VWrap::DescriptorSet::CreateMany(ret->m_descriptor_pool, layouts);
 
 	ret->LoadModel();
 	ret->CreateVertexBuffer();
 	ret->CreateIndexBuffer();
 	ret->CreateUniformBuffers();
 
-	ret->UpdateDescriptorSets();
+	ret->WriteDescriptors();
 
 	return ret;
+}
+
+void MeshRasterizer::CreatePipeline(std::shared_ptr<VWrap::RenderPass> render_pass)
+{
+	auto vert_shader_code = VWrap::readFile("../shaders/vert_rast.spv");
+	auto frag_shader_code = VWrap::readFile("../shaders/frag_rast.spv");
+
+	auto bindingDescription = VWrap::Vertex::getBindingDescription();
+	auto attributeDescriptions = VWrap::Vertex::getAttributeDescriptions();
+
+	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	vertexInputInfo.vertexAttributeDescriptionCount = 3;
+	vertexInputInfo.vertexBindingDescriptionCount = 1;
+	vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+	vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+
+	VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
+	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	inputAssembly.primitiveRestartEnable = VK_FALSE;
+
+	VkPipelineDynamicStateCreateInfo dynamicState{};
+	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	std::array<VkDynamicState, 2> dynamicStates = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+	dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+	dynamicState.pDynamicStates = dynamicStates.data();
+
+	VkPipelineRasterizationStateCreateInfo rasterizer{};
+	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+	rasterizer.depthClampEnable = VK_FALSE;
+	rasterizer.rasterizerDiscardEnable = VK_FALSE;
+	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+	rasterizer.lineWidth = 1.0f;
+	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+	rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	rasterizer.depthBiasEnable = VK_FALSE;
+	rasterizer.depthBiasConstantFactor = 0.0f; // Optional
+	rasterizer.depthBiasClamp = 0.0f; // Optional
+	rasterizer.depthBiasSlopeFactor = 0.0f; // Optional
+
+	VkPipelineDepthStencilStateCreateInfo depthStencil{};
+	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	depthStencil.depthTestEnable = VK_TRUE;
+	depthStencil.depthWriteEnable = VK_TRUE;
+	depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+	depthStencil.depthBoundsTestEnable = VK_FALSE;
+	depthStencil.minDepthBounds = 0.0f; // Optional
+	depthStencil.maxDepthBounds = 1.0f; // Optional
+	depthStencil.stencilTestEnable = VK_FALSE;
+	depthStencil.front = {}; // Optional
+	depthStencil.back = {}; // Optional
+
+	VWrap::PipelineCreateInfo create_info{};
+	create_info.extent = m_extent;
+	create_info.render_pass = render_pass;
+	create_info.descriptor_set_layout = m_descriptor_set_layout;
+	create_info.vertex_input_info = vertexInputInfo;
+	create_info.input_assembly = inputAssembly;
+	create_info.dynamic_state = dynamicState;
+	create_info.rasterizer = rasterizer;
+	create_info.depth_stencil = depthStencil;
+	create_info.push_constant_ranges = {};
+	create_info.subpass = 0;
+
+	m_pipeline = VWrap::Pipeline::Create(m_device, create_info, vert_shader_code, frag_shader_code);
+}
+
+void MeshRasterizer::CreateDescriptors(int max_sets)
+{
+	// Create the descriptor set layout
+	VkDescriptorSetLayoutBinding uboLayoutBinding{};
+	uboLayoutBinding.binding = 0;
+	uboLayoutBinding.descriptorCount = 1;
+	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	uboLayoutBinding.pImmutableSamplers = nullptr; // Optional - relevant for image sampling descriptors
+
+	VkDescriptorSetLayoutBinding samplerLayoutBinding{};
+	samplerLayoutBinding.binding = 1;
+	samplerLayoutBinding.descriptorCount = 1;
+	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	samplerLayoutBinding.pImmutableSamplers = nullptr; // Optional - relevant for image sampling descriptors
+
+	std::vector<VkDescriptorSetLayoutBinding> bindings = { uboLayoutBinding, samplerLayoutBinding };
+	m_descriptor_set_layout = VWrap::DescriptorSetLayout::Create(m_device, bindings);
+
+	// Create the descriptor pool
+	std::vector<VkDescriptorPoolSize> poolSizes(2);
+	poolSizes[0].descriptorCount = max_sets;
+	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	poolSizes[1].descriptorCount = max_sets;
+	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+
+	m_descriptor_pool = VWrap::DescriptorPool::Create(m_device, poolSizes, max_sets, 0);
+
+	// Create the descriptor sets
+	std::vector<std::shared_ptr<VWrap::DescriptorSetLayout>> layouts(static_cast<size_t>(max_sets), m_descriptor_set_layout);
+	m_descriptor_sets = VWrap::DescriptorSet::CreateMany(m_descriptor_pool, layouts);
 }
 
 void MeshRasterizer::CmdDraw(std::shared_ptr<VWrap::CommandBuffer> command_buffer, uint32_t frame) {
@@ -195,14 +296,9 @@ void MeshRasterizer::UpdateUniformBuffer(uint32_t frame, std::shared_ptr<Camera>
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
 	UniformBufferObject ubo{};
-	//ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	ubo.model = glm::mat4(1.0f);
 	ubo.view = camera->GetViewMatrix();
 	ubo.proj = camera->GetProjectionMatrix();
-
-	//ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	//ubo.proj = glm::perspective(glm::radians(45.0f), (float)m_extent.width / (float)m_extent.height, 0.1f, 10.0f);
-	//ubo.proj[1][1] *= -1;
 
 	memcpy(m_uniform_buffers_mapped[frame], &ubo, sizeof(ubo));
 }

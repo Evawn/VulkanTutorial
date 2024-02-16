@@ -24,15 +24,7 @@ namespace VWrap {
 
 	public:
 
-		/// <summary>
-		/// Creates a descriptor set layout for a mesh rasterizer with the given device.
-		/// </summary>
-		static std::shared_ptr<DescriptorSetLayout> CreateForMeshRasterizer(std::shared_ptr<Device> device);
-
-		/// <summary>
-		/// Creates a descriptor set layout for an octree tracer with the given device.
-		/// </summary>
-		static std::shared_ptr<DescriptorSetLayout> CreateForTracer(std::shared_ptr<Device> device);
+		static std::shared_ptr<DescriptorSetLayout> Create(std::shared_ptr<Device> device, std::vector<VkDescriptorSetLayoutBinding> bindings);
 
 
 		/// <summary>

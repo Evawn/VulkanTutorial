@@ -90,6 +90,10 @@ private:
 
 	
 	// CLASS FUNCTIONS ---------------------------------------------------------------------------------------
+	void CreatePipeline(std::shared_ptr<VWrap::RenderPass> render_pass);
+	
+	void CreateDescriptors(int max_sets);
+
 	/// <summary>
 	/// Creates the vertex buffer and copies the vertex data into it.
 	/// </summary>
@@ -108,7 +112,7 @@ private:
 	/// <summary>
 	/// Updates the descriptor sets with the uniform buffers and image sampler.
 	/// </summary>
-	void UpdateDescriptorSets();
+	void WriteDescriptors();
 
 	/// <summary>
 	/// Loads model and texture data from files, stores in CPU memory.

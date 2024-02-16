@@ -216,13 +216,13 @@ void Application::DrawFrame() {
 
 	// BEGIN RECORDING ------------------------------------------------
 	std::shared_ptr<VWrap::Framebuffer> framebuffer = m_framebuffers[image_index];
-	VWrap::CommandBuffer::Begin(command_buffer);
+	command_buffer->Begin();
 
 	// BEGIN PROFILING ------------------------------------------------
 	m_gpu_profiler->CmdBegin(command_buffer, frame_index);
 
 	// BEGIN RENDER PASS ------------------------------------------------
-	VWrap::CommandBuffer::CmdBeginRenderPass(command_buffer, m_render_pass, framebuffer);
+	command_buffer->CmdBeginRenderPass(m_render_pass, framebuffer);
 
 	// RECORD SCENE COMMANDS ------------------------------------------------
 	//m_mesh_rasterizer->UpdateUniformBuffer(frame_index, m_camera);
@@ -292,8 +292,9 @@ void Application::CreateDepthResources(VkSampleCountFlagBits samples)
 	info.properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 	info.mip_levels = 1;
 	info.samples = samples;
+	info.image_type = VK_IMAGE_TYPE_2D;
 
-	auto im = VWrap::Image::Create2D(m_allocator, info);
+	auto im = VWrap::Image::Create(m_allocator, info);
 	m_depth_image_view = VWrap::ImageView::Create(m_device, im, VK_IMAGE_ASPECT_DEPTH_BIT);
 }
 
@@ -308,8 +309,9 @@ void Application::CreateColorResources(VkSampleCountFlagBits samples)
 	info.properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 	info.tiling = VK_IMAGE_TILING_OPTIMAL;
 	info.samples = samples;
+	info.image_type = VK_IMAGE_TYPE_2D;
 
-	auto im = VWrap::Image::Create2D(m_allocator, info);
+	auto im = VWrap::Image::Create(m_allocator, info);
 	m_color_image_view = VWrap::ImageView::Create(m_device, im, VK_IMAGE_ASPECT_COLOR_BIT);
 }
 

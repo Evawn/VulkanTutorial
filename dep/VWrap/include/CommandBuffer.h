@@ -39,23 +39,22 @@ namespace VWrap {
 		static std::shared_ptr<CommandBuffer> Create(std::shared_ptr<CommandPool> command_pool, VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
 		/// <summary>
-		/// Allocates a single-use command buffer from the given command pool, and begins recording.
+		/// Begins recording the command buffer with the SINGLE_TIME_USE flag.
 		/// </summary>
-		/// <param name="command_pool">The command pool to allocate the command buffer from.</param>
-		/// <returns>A shared pointer to the command buffer.</returns>
-		static std::shared_ptr<CommandBuffer> BeginSingleTimeCommands(std::shared_ptr<CommandPool> command_pool);
+		void BeginSingle();
 
 		/// <summary>
-		/// Ends recording of the given command buffer, and submits it to the given queue.
+		/// Ends recording of the command buffer, and submits it.
 		/// </summary>
-		static void EndSingleTimeCommands(std::shared_ptr<CommandBuffer> command_buffer);
+		void EndAndSubmit();
 
-		static void Begin(std::shared_ptr<CommandBuffer> command_buffer);
+
+		void Begin(VkCommandBufferUsageFlags usage = 0);
 
 		/// <summary>
-		/// Records a command to begin the given render pass.
+		/// Records a command to begin the given render pass and framebuffer
 		/// </summary>
-		static void CmdBeginRenderPass(std::shared_ptr<CommandBuffer> command_buffer, std::shared_ptr<RenderPass> render_pass, std::shared_ptr<Framebuffer> framebuffer);
+		void CmdBeginRenderPass(std::shared_ptr<RenderPass> render_pass, std::shared_ptr<Framebuffer> framebuffer);
 
 		/// <summary>
 		/// Creates an image at the dst_image handle, and uploads the given texture to it.
@@ -65,22 +64,22 @@ namespace VWrap {
 		/// <summary>
 		/// Copies the data from the source buffer to this buffer
 		/// </summary>
-		static void CopyBufferToImage(std::shared_ptr<CommandPool> command_pool, std::shared_ptr<Buffer> src_buffer, std::shared_ptr<Image> dst_image, uint32_t width, uint32_t height, uint32_t depth);
+		void CmdCopyBufferToImage(std::shared_ptr<Buffer> src_buffer, std::shared_ptr<Image> dst_image, uint32_t width, uint32_t height, uint32_t depth);
 
 		/// <summary>
 		/// Builds the mipmaps for the given image.
 		/// </summary>
-		static void GenerateMipmaps(std::shared_ptr<CommandPool> command_pool, std::shared_ptr<Image> image, int32_t tex_width, int32_t tex_height);
+		void CmdGenerateMipmaps(std::shared_ptr<Image> image, int32_t tex_width, int32_t tex_height);
 
 		/// <summary>
 		/// Copies the data from the source buffer to the destination buffer
 		/// </summary>
-		static void CopyBuffer(std::shared_ptr<CommandPool> command_pool, std::shared_ptr<Buffer> src_buffer, std::shared_ptr<Buffer> dst_buffer, VkDeviceSize size);
+		void CmdCopyBuffer(std::shared_ptr<Buffer> src_buffer, std::shared_ptr<Buffer> dst_buffer, VkDeviceSize size);
 
 		/// <summary>
 		/// Submits a pipeline barrier to transition the image layout
 		/// </summary>
-		static void TransitionLayout(std::shared_ptr<CommandPool> command_pool, std::shared_ptr<Image> image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout);
+		void CmdTransitionImageLayout(std::shared_ptr<Image> image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout);
 
 		static void CreateAndFillBrickTexture(std::shared_ptr<CommandPool> command_pool, std::shared_ptr<Allocator> allocator, std::shared_ptr<Image>& dst_image, int brick_size);
 		

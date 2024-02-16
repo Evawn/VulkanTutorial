@@ -26,14 +26,6 @@ namespace VWrap {
 		/// <summary>
 		/// Creates a new descriptor pool from the given device, that can allocate the given number of descriptor sets.
 		/// </summary>
-		static std::shared_ptr<DescriptorPool> CreateForRasterizer(std::shared_ptr<Device> device, uint32_t max_sets);
-
-		static std::shared_ptr<DescriptorPool> CreateForTracer(std::shared_ptr<Device> device, uint32_t max_sets);
-
-
-		/// <summary>
-		/// Creates a new descriptor pool from the given device, that can allocate the given number of descriptor sets.
-		/// </summary>
 		static std::shared_ptr<DescriptorPool> Create(std::shared_ptr<Device> device, std::vector<VkDescriptorPoolSize> pool_sizes, uint32_t max_sets, VkDescriptorPoolCreateFlags flags);
 
 		/// <summary>
@@ -51,5 +43,4 @@ namespace VWrap {
 		/// </summary>
 		~DescriptorPool();
 	};
-
 }

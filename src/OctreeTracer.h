@@ -57,6 +57,10 @@ public:
 
 	static std::shared_ptr<OctreeTracer> Create(std::shared_ptr<VWrap::Allocator> allocator, std::shared_ptr<VWrap::Device> device, std::shared_ptr<VWrap::RenderPass> render_pass, std::shared_ptr<VWrap::CommandPool> graphics_pool, VkExtent2D extent, uint32_t num_frames);
 
+	void CreateDescriptors(int max_sets);
+
+	void CreatePipeline(std::shared_ptr<VWrap::RenderPass> render_pass);
+
 	/// <summary>
 /// Creates one uniform buffer for each frame in flight and maps them to host memory.
 /// </summary>
@@ -65,7 +69,7 @@ public:
 	/// <summary>
 	/// Updates the descriptor sets with the uniform buffers and image sampler.
 	/// </summary>
-	void UpdateDescriptorSets();
+	void WriteDescriptors();
 
 
 	/// <summary>

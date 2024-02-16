@@ -19,49 +19,40 @@ namespace VWrap {
 		return ret;
 	}
 
-	std::shared_ptr<CommandBuffer> CommandBuffer::BeginSingleTimeCommands(std::shared_ptr<CommandPool> command_pool) {
-		auto ret = Create(command_pool, VK_COMMAND_BUFFER_LEVEL_PRIMARY);
-
-		VkCommandBufferBeginInfo info{};
-		info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-		if (vkBeginCommandBuffer(ret->m_command_buffer, &info) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to begin recording command buffer!");
-		}
-
-		return ret;
+	void CommandBuffer::BeginSingle() {
+		Begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 	}
 
-	void CommandBuffer::EndSingleTimeCommands(std::shared_ptr<CommandBuffer> command_buffer) {
-		if (vkEndCommandBuffer(command_buffer->m_command_buffer) != VK_SUCCESS) {
+	void CommandBuffer::EndAndSubmit() {
+		if (vkEndCommandBuffer(m_command_buffer) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to record command buffer!");
 		}
 
 		VkSubmitInfo info{};
 		info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		info.commandBufferCount = 1;
-		info.pCommandBuffers = &command_buffer->m_command_buffer;
+		info.pCommandBuffers = &m_command_buffer;
 
-		if (vkQueueSubmit(command_buffer->GetCommandPool()->GetQueue()->Get(), 1, &info, VK_NULL_HANDLE) != VK_SUCCESS) {
+		auto queue = m_command_pool->GetQueue();
+		if (vkQueueSubmit(queue->Get(), 1, &info, VK_NULL_HANDLE) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to submit command buffer!");
 		}
 
-		vkQueueWaitIdle(command_buffer->GetCommandPool()->GetQueue()->Get());
+		vkQueueWaitIdle(queue->Get());
 	}
-	
-	void CommandBuffer::Begin(std::shared_ptr<CommandBuffer> command_buffer) {
+
+	void CommandBuffer::Begin(VkCommandBufferUsageFlags flags) {
 		VkCommandBufferBeginInfo beginInfo{};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.flags = 0; // Optional
+		beginInfo.flags = flags;
 		beginInfo.pInheritanceInfo = nullptr; // Optional
 
-		if (vkBeginCommandBuffer(command_buffer->Get(), &beginInfo) != VK_SUCCESS) {
+		if (vkBeginCommandBuffer(m_command_buffer, &beginInfo) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to begin recording command buffer.");
 		}
 	}
-	
-	void CommandBuffer::CmdBeginRenderPass(std::shared_ptr<CommandBuffer> command_buffer, std::shared_ptr<RenderPass> render_pass, std::shared_ptr<Framebuffer> framebuffer) {
+
+	void CommandBuffer::CmdBeginRenderPass(std::shared_ptr<RenderPass> render_pass, std::shared_ptr<Framebuffer> framebuffer) {
 		VkRenderPassBeginInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		renderPassInfo.framebuffer = framebuffer->Get();
@@ -76,7 +67,7 @@ namespace VWrap {
 		renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 		renderPassInfo.pClearValues = clearValues.data();
 
-		vkCmdBeginRenderPass(command_buffer->Get(), &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBeginRenderPass(m_command_buffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 	}
 
 	void CommandBuffer::UploadTextureToImage(std::shared_ptr<CommandPool> command_pool, std::shared_ptr<Allocator> allocator, std::shared_ptr<Image>& dst_image, const char* file_name)
@@ -105,17 +96,19 @@ namespace VWrap {
 		info.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 		info.properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 		info.mip_levels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
+		info.image_type = VK_IMAGE_TYPE_2D;
 
-		dst_image = Image::Create2D(allocator, info);
+		dst_image = Image::Create(allocator, info);
 
-		CommandBuffer::TransitionLayout(command_pool, dst_image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-		CommandBuffer::CopyBufferToImage(command_pool, staging_buffer, dst_image, texWidth, texHeight, 1);
-		CommandBuffer::GenerateMipmaps(command_pool, dst_image, texWidth, texHeight);
+		auto command_buffer = CommandBuffer::Create(command_pool);
+		command_buffer->BeginSingle();
+		command_buffer->CmdTransitionImageLayout(dst_image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		command_buffer->CmdCopyBufferToImage(staging_buffer, dst_image, texWidth, texHeight, 1);
+		command_buffer->CmdGenerateMipmaps(dst_image, texWidth, texHeight);
+		command_buffer->EndAndSubmit();
 	}
 
-	void CommandBuffer::CopyBufferToImage(std::shared_ptr<CommandPool> command_pool, std::shared_ptr<Buffer> src_buffer, std::shared_ptr<Image> dst_image, uint32_t width, uint32_t height, uint32_t depth = 1) {
-		auto command_buffer = VWrap::CommandBuffer::BeginSingleTimeCommands(command_pool);
-
+	void CommandBuffer::CmdCopyBufferToImage(std::shared_ptr<Buffer> src_buffer, std::shared_ptr<Image> dst_image, uint32_t width, uint32_t height, uint32_t depth = 1) {
 		VkBufferImageCopy copy{};
 		copy.bufferOffset = 0;
 		copy.imageOffset = { 0, 0,0 };
@@ -128,11 +121,10 @@ namespace VWrap {
 		copy.imageSubresource.layerCount = 1;
 		copy.imageExtent = { width, height, depth };
 
-		vkCmdCopyBufferToImage(command_buffer->Get(), src_buffer->Get(), dst_image->Get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
-		VWrap::CommandBuffer::EndSingleTimeCommands(command_buffer);
+		vkCmdCopyBufferToImage(m_command_buffer, src_buffer->Get(), dst_image->Get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy);
 	}
 
-	void CommandBuffer::GenerateMipmaps(std::shared_ptr<CommandPool> command_pool, std::shared_ptr<Image> image, int32_t width, int32_t height)
+	void CommandBuffer::CmdGenerateMipmaps(std::shared_ptr<Image> image, int32_t width, int32_t height)
 	{
 		auto format = image->GetFormat();
 		auto mip_levels = image->GetMipLevels();
@@ -142,8 +134,6 @@ namespace VWrap {
 		if (!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)) {
 			throw std::runtime_error("texture image format does not support linear blitting!");
 		}
-
-		auto command_buffer = VWrap::CommandBuffer::BeginSingleTimeCommands(command_pool);
 
 		VkImageMemoryBarrier barrier{};
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -165,7 +155,7 @@ namespace VWrap {
 			barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 
 			vkCmdPipelineBarrier(
-				command_buffer->Get(),
+				m_command_buffer,
 				VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
 				0, nullptr,
 				0, nullptr,
@@ -187,7 +177,7 @@ namespace VWrap {
 			blit.dstSubresource.layerCount = 1;
 
 			vkCmdBlitImage(
-				command_buffer->Get(),
+				m_command_buffer,
 				image->Get(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 				image->Get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 				1, &blit,
@@ -200,7 +190,7 @@ namespace VWrap {
 			barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
 			vkCmdPipelineBarrier(
-				command_buffer->Get(),
+				m_command_buffer,
 				VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
 				0, nullptr,
 				0, nullptr,
@@ -217,30 +207,24 @@ namespace VWrap {
 		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
-		vkCmdPipelineBarrier(command_buffer->Get(),
+		vkCmdPipelineBarrier(m_command_buffer,
 			VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
 			0, nullptr,
 			0, nullptr,
 			1, &barrier);
-
-		CommandBuffer::EndSingleTimeCommands(command_buffer);
 	}
 
-	void CommandBuffer::CopyBuffer(std::shared_ptr<CommandPool> command_pool, std::shared_ptr<Buffer> src_buffer, std::shared_ptr<Buffer> dst_buffer, VkDeviceSize size)
+	void CommandBuffer::CmdCopyBuffer(std::shared_ptr<Buffer> src_buffer, std::shared_ptr<Buffer> dst_buffer, VkDeviceSize size)
 	{
-		auto command_buffer = VWrap::CommandBuffer::BeginSingleTimeCommands(command_pool);
-
 		VkBufferCopy copyRegion{};
 		copyRegion.size = size;
 		copyRegion.dstOffset = 0;
 		copyRegion.srcOffset = 0;
 
-		vkCmdCopyBuffer(command_buffer->Get(), src_buffer->Get(), dst_buffer->Get(), 1, &copyRegion);
-
-		VWrap::CommandBuffer::EndSingleTimeCommands(command_buffer);
+		vkCmdCopyBuffer(m_command_buffer, src_buffer->Get(), dst_buffer->Get(), 1, &copyRegion);
 	}
 
-	void CommandBuffer::TransitionLayout(std::shared_ptr<CommandPool> command_pool, std::shared_ptr<Image> image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout)
+	void CommandBuffer::CmdTransitionImageLayout( std::shared_ptr<Image> image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout)
 	{
 		VkImageMemoryBarrier barrier{};
 		barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -301,16 +285,14 @@ namespace VWrap {
 			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		}
 
-		auto graphics_command_buffer = VWrap::CommandBuffer::BeginSingleTimeCommands(command_pool);
 		vkCmdPipelineBarrier(
-			graphics_command_buffer->Get(),
+			m_command_buffer,
 			sourceStage, destinationStage,
 			0,
 			0, nullptr,
 			0, nullptr,
 			1, &barrier
 		);
-		VWrap::CommandBuffer::EndSingleTimeCommands(graphics_command_buffer);
 	}
 
 	void CommandBuffer::CreateAndFillBrickTexture(std::shared_ptr<CommandPool> command_pool, std::shared_ptr<Allocator> allocator, std::shared_ptr<Image>& dst_image, int brick_size)
@@ -330,7 +312,7 @@ namespace VWrap {
 			int z = i / (brick_size * brick_size);
 			glm::vec3 pos = glm::vec3(x, y, z);
 			auto dist = glm::distance(pos, glm::vec3(brick_size / 2.0f));
-			if(dist < brick_size/4.0f) 				
+			if (dist < brick_size / 4.0f)
 				voxels[i] = 1;
 			else
 				voxels[i] = 0;
@@ -365,11 +347,15 @@ namespace VWrap {
 		info.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 		info.properties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 		info.mip_levels = 1;
+		info.image_type = VK_IMAGE_TYPE_3D;
 
-		dst_image = Image::Create3D(allocator, info);
+		dst_image = Image::Create(allocator, info);
 
-		CommandBuffer::TransitionLayout(command_pool, dst_image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-		CommandBuffer::CopyBufferToImage(command_pool, staging_buffer, dst_image, brick_size, brick_size, brick_size);
-		CommandBuffer::TransitionLayout(command_pool, dst_image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		auto command_buffer = CommandBuffer::Create(command_pool);
+		command_buffer->BeginSingle();
+		command_buffer->CmdTransitionImageLayout(dst_image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		command_buffer->CmdCopyBufferToImage(staging_buffer, dst_image, brick_size, brick_size, brick_size);
+		command_buffer->CmdTransitionImageLayout(dst_image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		command_buffer->EndAndSubmit();
 	}
 }

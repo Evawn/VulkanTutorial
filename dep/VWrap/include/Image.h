@@ -3,11 +3,8 @@
 #include "Device.h"
 #include <memory>
 #include <string>
-
 #include "vk_mem_alloc.h"
-
 #include "Allocator.h"
-
 
 namespace VWrap {
 
@@ -20,6 +17,7 @@ namespace VWrap {
 		VkMemoryPropertyFlags properties;
 		uint32_t mip_levels;
 		VkSampleCountFlagBits samples;
+		VkImageType image_type;
 	};
 
 	/// <summary> Represents a Vulkan image and its corresponding memory allocation </summary>
@@ -42,14 +40,14 @@ namespace VWrap {
 		/// <summary> The width and height of the image </summary>
 		uint32_t m_width, m_height;
 
+		VkImageType m_image_type;
+
 		/// <summary> The allocator used to create the image </summary>
 		std::shared_ptr<Allocator> m_allocator;
 
 	public:
-		/// <summary> Creates a new image </summary>
-		static std::shared_ptr<Image> Create2D(std::shared_ptr<Allocator> allocator,  ImageCreateInfo& info);
 
-		static std::shared_ptr<Image> Create3D(std::shared_ptr<Allocator> allocator, ImageCreateInfo& info);
+		static std::shared_ptr<Image> Create(std::shared_ptr<Allocator> allocator, ImageCreateInfo& info);
 
 		/// <summary>
 		/// Returns the image handle
@@ -65,6 +63,8 @@ namespace VWrap {
 		/// Gets the number of mip levels
 		/// </summary>
 		uint32_t GetMipLevels() const { return m_mip_levels; }
+
+		VkImageType GetImageType() const { return m_image_type; }
 
 		/// <summary>
 		/// Gets the allocator used to create the image

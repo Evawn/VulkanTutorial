@@ -9,6 +9,20 @@
 
 namespace VWrap {
 
+	struct PipelineCreateInfo {
+		VkExtent2D extent;
+		std::shared_ptr<RenderPass> render_pass;
+		std::shared_ptr<DescriptorSetLayout> descriptor_set_layout;
+		VkPipelineVertexInputStateCreateInfo vertex_input_info;
+		VkPipelineInputAssemblyStateCreateInfo input_assembly;
+		VkPipelineDynamicStateCreateInfo dynamic_state;
+		VkPipelineRasterizationStateCreateInfo rasterizer;
+		VkPipelineDepthStencilStateCreateInfo depth_stencil;
+
+		std::vector<VkPushConstantRange> push_constant_ranges;
+		uint32_t subpass;
+	};
+
 	/// <summary>
 	/// Represents a Vulkan pipeline.
 	/// </summary>
@@ -31,17 +45,8 @@ namespace VWrap {
 
 	public:
 
-		/// <summary>
-		/// Creates a new pipeline with the given render pass, descriptor set layout and extent.
-		/// </summary>
-		static std::shared_ptr<Pipeline> CreateRasterizer(std::shared_ptr<Device> device, std::shared_ptr<RenderPass> render_pass, std::shared_ptr<DescriptorSetLayout> descriptor_set_layout, VkExtent2D extent);;
+		static std::shared_ptr<Pipeline> Create(std::shared_ptr<Device> device, const PipelineCreateInfo& create_info, const std::vector<char>& vertex_shader_code, const std::vector<char>& fragment_shader_code);
 
-		/// <summary>
-		/// Creates a new pipeline with the given render pass, descriptor set layout and extent.
-		/// </summary>
-		static std::shared_ptr<Pipeline> CreateTracer(std::shared_ptr<Device> device, std::shared_ptr<RenderPass> render_pass, std::shared_ptr<DescriptorSetLayout> descriptor_set_layout, VkExtent2D extent);;
-
-		/// <summary> Gets the pipeline handle. </summary>
 		VkPipeline Get() const { return m_pipeline; }
 
 		/// <summary> Gets the pipeline layout handle. </summary>
